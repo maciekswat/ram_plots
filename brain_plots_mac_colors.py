@@ -541,6 +541,27 @@ def extract_electrode_positions(tal_path):
     return lh_avg_surf, rh_avg_surf
 
 
+def divergent_color_lut(table_size=20, table_range=[0,1]):
+    ctf = vtk.vtkColorTransferFunction()
+    ctf.SetColorSpaceToDiverging()
+    # Green to tan.
+    ctf.AddRGBPoint(0.0, 0.085, 0.532, 0.201)
+    ctf.AddRGBPoint(0.5, 0.865, 0.865, 0.865)
+    ctf.AddRGBPoint(1.0, 0.677, 0.492, 0.093)
+
+    lut = vtk.vtkLookupTable()
+    lut.SetNumberOfTableValues(table_size)
+    lut.Build()
+
+    for i in range(0,table_size):
+        rgb = list(ctf.GetColor(float(i)/table_size))+[1]
+        lut.SetTableValue(i,rgb)
+
+    lut.SetTableRange(table_range[0],table_range[1])
+
+    return lut
+
+
 def BrainPlotExample(lh_avg_surf=None, rh_avg_surf=None):
     """A simple example that uses the QVTKRenderWindowInteractor class."""
 
@@ -646,11 +667,30 @@ def BrainPlotExample(lh_avg_surf=None, rh_avg_surf=None):
     #     electrode_colors.InsertNextTupleValue((255, 0, 0))
     #     print pt
 
+    num_electrodes = len(lh_avg_surf)
+
+    lut = vtk.vtkLookupTable()
+    lut.SetTableRange(0,num_electrodes)
+    lut.Build()
+
+
+    lut = divergent_color_lut(table_range=[0,num_electrodes])
+
+
     print lh_avg_surf
-    for avg_surf in lh_avg_surf:
+    for i,avg_surf in enumerate(lh_avg_surf):
         print avg_surf
         electrode_points.InsertNextPoint(avg_surf.x_snap, avg_surf.y_snap, avg_surf.z_snap)
-        electrode_colors.InsertNextTupleValue((255, 0, 0))
+
+        # electrode_colors.InsertNextTupleValue((255, 0, 0))
+        color_tuple=[0,0,0]
+        lut.GetColor(i,color_tuple)
+        # lut.GetColor(num_electrodes,color_tuple)
+
+        color_tuple = map(lambda x : int(round(x*255)), color_tuple)
+
+        electrode_colors.InsertNextTupleValue(color_tuple)
+
 
 
     glyphs = vtk.vtkGlyph3D()

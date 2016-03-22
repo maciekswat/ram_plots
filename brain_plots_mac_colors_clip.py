@@ -185,7 +185,7 @@ class QVTKRenderWindowInteractor(QtGui.QWidget):  # Mac
         else:
             #            print MODULENAME, ' NOT predefd rw'
             self._RenderWindow = vtk.vtkRenderWindow()
-        #        print MODULENAME,'   winSize = ',self._RenderWindow.GetSize()
+        # print MODULENAME,'   winSize = ',self._RenderWindow.GetSize()
         #        ---- QVTKRenderWindowInteractor_mac.py:   NOT predefd rw
         #        ---- QVTKRenderWindowInteractor_mac.py:     winSize =  (0, 0)
 
@@ -527,21 +527,114 @@ def QVTKRenderWidgetConeExample():
     # start event processing
     app.exec_()
 
-def extract_electrode_positions(tal_path):
+
+def extract_electrode_positions(tal_path, electrode_types=['D', 'G', 'S']):
     from ptsa.data.readers import TalReader
     tal_reader = TalReader(filename=tal_path)
     tal_structs = tal_reader.read()
 
-    lh_selector = np.array(map( lambda loc : loc.startswith('Left'), tal_structs.Loc1))
-    rh_selector = np.array(map( lambda loc : loc.startswith('Right'), tal_structs.Loc1))
+    lh_selector = np.array(map(lambda loc: loc.startswith('Left'), tal_structs.Loc1))
+    rh_selector = np.array(map(lambda loc: loc.startswith('Right'), tal_structs.Loc1))
 
-    lh_avg_surf = tal_structs.avgSurf[lh_selector]
-    rh_avg_surf = tal_structs.avgSurf[rh_selector]
+    electrode_types_lower = map(lambda t: t.lower(), electrode_types)
 
-    return lh_avg_surf, rh_avg_surf
+    electrode_type_selector = np.array(map(lambda eType: eType.lower() in electrode_types_lower, tal_structs.eType))
 
 
-def BrainPlotExample(lh_avg_surf=None, rh_avg_surf=None):
+    # hemi_data_dtype = np.dtype(
+    #     {'avgSurf':tal_structs.dtype.fields['avgSurf'],
+    #      'eType':tal_structs.dtype.fields['avgSurf']
+    #      }
+    # )
+    #
+    # lh_data = np.ndarray(tal_structs.shape, hemi_data_dtype, tal_structs, 0, tal_structs.strides).view(np.recarray)
+
+    lh_data = tal_structs[['avgSurf','eType']]
+    rh_data = tal_structs[['avgSurf','eType']]
+
+    lh_data = lh_data[lh_selector & electrode_type_selector]
+    rh_data = rh_data[rh_selector & electrode_type_selector]
+
+
+    # lh_avg_surf = tal_structs.avgSurf[lh_selector & electrode_type_selector]
+    # lh_eType = tal_structs.eType[lh_selector & electrode_type_selector]
+    #
+    # rh_avg_surf = tal_structs.avgSurf[rh_selector & electrode_type_selector]
+    # rh_eType = tal_structs.eType[rh_selector & electrode_type_selector]
+    #
+    # # lh_recarray = np.recarray(lh_avg_surf,)
+    #
+    # return lh_avg_surf, rh_avg_surf
+
+    return lh_data,rh_data
+
+def divergent_color_lut(table_size=20, table_range=[0, 1]):
+    ctf = vtk.vtkColorTransferFunction()
+    ctf.SetColorSpaceToDiverging()
+    # Green to tan.
+    ctf.AddRGBPoint(0.0, 0.085, 0.532, 0.201)
+    ctf.AddRGBPoint(0.5, 0.865, 0.865, 0.865)
+    ctf.AddRGBPoint(1.0, 0.677, 0.492, 0.093)
+
+    lut = vtk.vtkLookupTable()
+    lut.SetNumberOfTableValues(table_size)
+    lut.Build()
+
+    for i in range(0, table_size):
+        rgb = list(ctf.GetColor(float(i) / table_size)) + [1]
+        lut.SetTableValue(i, rgb)
+
+    lut.SetTableRange(table_range[0], table_range[1])
+
+    return lut
+
+def cut_brain_hemi(hemi_elec_data,hemi_poly_data):
+    depth_elec_data = hemi_elec_data[ (hemi_elec_data.eType=='D') | (hemi_elec_data.eType=='d')]
+    print depth_elec_data
+    print
+
+    x_coords = np.array([avg_surf.x_snap for avg_surf in depth_elec_data.avgSurf],dtype=np.float)
+    y_coords = np.array([avg_surf.y_snap for avg_surf in depth_elec_data.avgSurf],dtype=np.float)
+    z_coords = np.array([avg_surf.z_snap for avg_surf in depth_elec_data.avgSurf],dtype=np.float)
+
+    x_min, x_max = np.min(x_coords),np.max(x_coords)
+    y_min, y_max = np.min(y_coords),np.max(y_coords)
+    z_min, z_max = np.min(z_coords),np.max(z_coords)
+
+    clipPlane = vtk.vtkPlane()
+    clipPlane.SetNormal(0.0, 0.0, 1.0)
+    # clipPlane.SetOrigin(0, 0, np.max(z_coords))
+    clipPlane.SetOrigin(np.max(x_coords), np.max(y_coords), np.max(z_coords))
+
+    # clipPlane.SetOrigin(0, 0, 0)
+
+    clipper = vtk.vtkClipPolyData()
+    clipper.SetInputData(hemi_poly_data)
+    clipper.SetClipFunction(clipPlane)
+
+    return clipper
+
+
+
+def get_hemi_polydata(hemi='lh'):
+
+    vreader = vtk.vtkPolyDataReader()
+    # vreader.SetFileName('lh.vtk')
+    if hemi.startswith('l'):
+        vreader.SetFileName('lh.pial.vtk')
+    elif hemi.startswith('r'):
+        vreader.SetFileName('lh.pial.vtk')
+    else:
+        raise RuntimeError('hemi argument must begin with letter "l" or "r" ')
+
+    vreader.Update()
+
+    pd = vreader.GetOutput()
+
+    return pd
+
+
+def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D', 'G', 'S']):
     """A simple example that uses the QVTKRenderWindowInteractor class."""
 
     vtk_major_version = vtk.vtkVersion().GetVTKMajorVersion()
@@ -561,27 +654,56 @@ def BrainPlotExample(lh_avg_surf=None, rh_avg_surf=None):
     ren = vtk.vtkRenderer()
     widget.GetRenderWindow().AddRenderer(ren)
 
-    vreader = vtk.vtkPolyDataReader()
-    # vreader.SetFileName('lh.vtk')
-    vreader.SetFileName('lh.pial.vtk')
-    vreader.Update()
 
-    pd = vreader.GetOutput()
-    # rps = vtk.vtkRegularPolygonSource(pd)
+
+    # vreader = vtk.vtkPolyDataReader()
+    # # vreader.SetFileName('lh.vtk')
+    # vreader.SetFileName('lh.pial.vtk')
+    # vreader.Update()
+    #
+    # pd = vreader.GetOutput()
+    # # rps = vtk.vtkRegularPolygonSource(pd)
+
+    pd = get_hemi_polydata(hemi='l')
+
+    if len(electrode_types)==1 and electrode_types[0].lower()=='d':
+        # will cut brain
+        clipper = cut_brain_hemi(lh_elec_data,pd)
+
+    # clipPlane = vtk.vtkPlane()
+    # clipPlane.SetNormal(1.0, -1.0, -1.0)
+    # clipPlane.SetOrigin(0, 0, 0)
+    #
+    # clipper = vtk.vtkClipPolyData()
+    # clipper.SetInputData(pd)
+    # clipper.SetClipFunction(clipPlane)
+    #
+
+    # brain_mapper = vtk.vtkPolyDataMapper()
+    #
+    # if vtk_major_version == 5:
+    #
+    #     brain_mapper.SetInput(pd)
+    #
+    # else:
+    #     brain_mapper.SetInputData(pd)
+
 
     brain_mapper = vtk.vtkPolyDataMapper()
-    if vtk_major_version == 5:
 
-        brain_mapper.SetInput(pd)
+    if vtk_major_version <= 5:
+
+        # brain_mapper.SetInput(clipper)
+        brain_mapper.SetInputConnection(clipper.GetOutputPort())
 
     else:
-        brain_mapper.SetInputData(pd)
+        brain_mapper.SetInputConnection(clipper.GetOutputPort())
 
     brain_actor = vtk.vtkActor()
     brain_actor.SetMapper(brain_mapper)
     # brain_actor.SetAlpha(0.3)
 
-    brain_actor.GetProperty().SetOpacity(0.5)
+    brain_actor.GetProperty().SetOpacity(1.0)
 
     ren.AddActor(brain_actor)
     #
@@ -612,53 +734,34 @@ def BrainPlotExample(lh_avg_surf=None, rh_avg_surf=None):
     electrode_colors = vtk.vtkUnsignedCharArray()
     electrode_colors.SetNumberOfComponents(3)
 
-    electrode_points.InsertNextPoint(0, 0, 75)
-    electrode_colors.InsertNextTupleValue((255, 0, 0))
+    num_electrodes = len(lh_elec_data)
 
-    electrode_points.InsertNextPoint(0, 0, -20)
-    electrode_colors.InsertNextTupleValue((255, 0, 0))
+    lut = vtk.vtkLookupTable()
+    lut.SetTableRange(0, num_electrodes)
+    lut.Build()
 
-    electrode_points.InsertNextPoint(0, 63, 0)
-    electrode_colors.InsertNextTupleValue((0, 255, 0))
+    lut = divergent_color_lut(table_range=[0, num_electrodes])
 
-    electrode_points.InsertNextPoint(0, -78, 0)
-    electrode_colors.InsertNextTupleValue((0, 255, 0))
-
-    electrode_points.InsertNextPoint(10, 0, 0)
-    electrode_colors.InsertNextTupleValue((0, 0, 255))
-
-    electrode_points.InsertNextPoint(-70, 0, 0)
-    electrode_colors.InsertNextTupleValue((0, 0, 255))
-
-    # electrode_points.InsertNextPoint(0.,0.1,0.)
-    # electrode_points.InsertNextPoint(0.,0.0,0.)
-
-
-    # # -------------------------- RANDOM ELECTRODES LOCATIONS
-    # v = pd.GetPoints()
-    # print v.GetNumberOfPoints()
-    #
-    # random_pt_idx = np.random.random_integers(0, v.GetNumberOfPoints() - 1, size=20)
-    #
-    # for idx in random_pt_idx:
-    #     pt = v.GetPoint(idx)
-    #     electrode_points.InsertNextPoint(pt)
-    #     electrode_colors.InsertNextTupleValue((255, 0, 0))
-    #     print pt
-
-    print lh_avg_surf
-    for avg_surf in lh_avg_surf:
+    print lh_elec_data
+    for i, avg_surf in enumerate(lh_elec_data.avgSurf):
         print avg_surf
         electrode_points.InsertNextPoint(avg_surf.x_snap, avg_surf.y_snap, avg_surf.z_snap)
-        electrode_colors.InsertNextTupleValue((255, 0, 0))
 
+        # electrode_colors.InsertNextTupleValue((255, 0, 0))
+        color_tuple = [0, 0, 0]
+        lut.GetColor(i, color_tuple)
+        # lut.GetColor(num_electrodes,color_tuple)
+
+        color_tuple = map(lambda x: int(round(x * 255)), color_tuple)
+
+        electrode_colors.InsertNextTupleValue(color_tuple)
 
     glyphs = vtk.vtkGlyph3D()
 
     cone = vtk.vtkSphereSource()
     # cone.SetResolution(5)
     # cone.SetHeight(2)
-    cone.SetRadius(5.0)
+    cone.SetRadius(3.0)
 
     glyphs.SetSourceConnection(cone.GetOutputPort())
     glyphs.SetColorModeToColorByScalar()
@@ -694,260 +797,15 @@ def BrainPlotExample(lh_avg_surf=None, rh_avg_surf=None):
     axes.AxisLabelsOff()
 
     ren.AddActor(axes)
+    widget.resize(600,600)
 
     # show the widget
     widget.raise_()
+
     widget.show()
 
     # start event processing
     app.exec_()
-
-    pass
-    # reader1 = VTKFileReader()
-    # reader1.initialize(vtkFile_l)
-
-
-    # # create the widget
-    # widget = QVTKRenderWindowInteractor()
-    #
-    # widget.setMouseInteractionSchemeTo3D()
-    #
-    # widget.Initialize()
-    # widget.Start()
-    # # if you dont want the 'q' key to exit comment this.
-    # widget.AddObserver("ExitEvent", lambda o, e, a=app: a.quit())
-    #
-    # ren = vtk.vtkRenderer()
-    # widget.GetRenderWindow().AddRenderer(ren)
-    #
-    # cone = vtk.vtkConeSource()
-    # cone.SetResolution(8)
-    #
-    # coneMapper = vtk.vtkPolyDataMapper()
-    #
-    # VTK_MAJOR_VERSION=vtk.vtkVersion.GetVTKMajorVersion()
-    # if VTK_MAJOR_VERSION>=6:
-    #     coneMapper.SetInputData(cone.GetOutput())
-    # else:
-    #     coneMapper.SetInput(cone.GetOutput())
-    #
-    #
-    #
-    # coneActor = vtk.vtkActor()
-    # coneActor.SetMapper(coneMapper)
-    #
-    # ren.AddActor(coneActor)
-    #
-    # # show the widget
-    # widget.show()
-    # # start event processing
-    # app.exec_()
-
-
-#
-# vtkOpenGLCamera (0x1007ef240)
-#   Debug: Off
-#   Modified Time: 86356
-#   Reference Count: 2
-#   Registered Events: (none)
-#   ClippingRange: (296.138, 610.266)
-#   DirectionOfProjection: (-0.0807727, 0.0380339, -0.996007)
-#   Distance: 434.743
-#   EyeAngle: 2
-#   FocalDisk: 1
-#   FocalPoint: (-33.7454, -18.4959, 15.5496)
-#   ViewShear: (0, 0, 1)
-#   ParallelProjection: Off
-#   ParallelScale: 1
-#   Position: (1.36993, -35.0308, 448.556)
-#   Stereo: Off
-#   Left Eye: 1
-#   Thickness: 314.128
-#   ViewAngle: 30
-#   UseHorizontalViewAngle: 0
-#   UserTransform: (none)
-# (none)
-#   ViewPlaneNormal: (0.0807727, -0.0380339, 0.996007)
-#   ViewUp: (-0.086411, -0.995777, -0.0310175)
-#   WindowCenter: (0, 0)
-#   UseOffAxisProjection: (0)
-#   ScreenBottomLeft: (-0.5, -0.5, -0.5)
-#   ScreenBottomRight: (0.5, -0.5, -0.5)
-#   ScreenTopRight: (0.5, 0.5, -0.5)
-#   EyeSeparation: (0.06)
-#   WorldToScreenMatrix: (0x114515f50
-#     Debug: Off
-#     Modified Time: 2352
-#     Reference Count: 1
-#     Registered Events: (none)
-#     Elements:
-#         1 0 0 0
-#         0 1 0 0
-#         0 0 1 0
-#         0 0 0 1
-#   )
-#   EyeTransformMatrix: (0x1007eeaa0
-#     Debug: Off
-#     Modified Time: 2354
-#     Reference Count: 1
-#     Registered Events: (none)
-#     Elements:
-#         1 0 0 0
-#         0 1 0 0
-#         0 0 1 0
-#         0 0 0 1
-#   )
-#   ModelTransformMatrix: (0x1007ef630
-#     Debug: Off
-#     Modified Time: 2356
-#     Reference Count: 1
-#     Registered Events: (none)
-#     Elements:
-#         1 0 0 0
-#         0 1 0 0
-#         0 0 1 0
-#         0 0 0 1
-#   )
-# vtkOpenGLCamera (0x1003f3970)
-#   Debug: Off
-#   Modified Time: 37572
-#   Reference Count: 2
-#   Registered Events: (none)
-#   ClippingRange: (280.84, 629.522)
-#   DirectionOfProjection: (0.896686, -0.245911, -0.368078)
-#   Distance: 434.742
-#   EyeAngle: 2
-#   FocalDisk: 1
-#   FocalPoint: (-33.7454, -18.4959, 15.5496)
-#   ViewShear: (0, 0, 1)
-#   ParallelProjection: Off
-#   ParallelScale: 1
-#   Position: (-423.573, 88.4119, 175.569)
-#   Stereo: Off
-#   Left Eye: 1
-#   Thickness: 348.682
-#   ViewAngle: 30
-#   UseHorizontalViewAngle: 0
-#   UserTransform: (none)
-# (none)
-#   ViewPlaneNormal: (-0.896686, 0.245911, 0.368078)
-#   ViewUp: (0.378739, -0.00424452, 0.925494)
-#   WindowCenter: (0, 0)
-#   UseOffAxisProjection: (0)
-#   ScreenBottomLeft: (-0.5, -0.5, -0.5)
-#   ScreenBottomRight: (0.5, -0.5, -0.5)
-#   ScreenTopRight: (0.5, 0.5, -0.5)
-#   EyeSeparation: (0.06)
-#   WorldToScreenMatrix: (0x1003cc9b0
-#     Debug: Off
-#     Modified Time: 2352
-#     Reference Count: 1
-#     Registered Events: (none)
-#     Elements:
-#         1 0 0 0
-#         0 1 0 0
-#         0 0 1 0
-#         0 0 0 1
-#   )
-#   EyeTransformMatrix: (0x1003d0d90
-#     Debug: Off
-#     Modified Time: 2354
-#     Reference Count: 1
-#     Registered Events: (none)
-#     Elements:
-#         1 0 0 0
-#         0 1 0 0
-#         0 0 1 0
-#         0 0 0 1
-#   )
-#   ModelTransformMatrix: (0x1003e6070
-#     Debug: Off
-#     Modified Time: 2356
-#     Reference Count: 1
-#     Registered Events: (none)
-#     Elements:
-#         1 0 0 0
-#         0 1 0 0
-#         0 0 1 0
-#         0 0 0 1
-#   )
-
-
-
-
-#
-#         ClippingRange: (342.503, 551.901)
-#         FocalPoint: (-33.7454, -18.4959, 15.5496)
-#         Position: (396.483, -24.5132, 77.7444)
-#         ViewPlaneNormal: (0.989617, -0.0138409, 0.143061)
-#         ViewUp: (-0.137778, 0.192088, 0.971658)
-#
-# vtkOpenGLCamera (0x10039ee90)
-#   Debug: Off
-#   Modified Time: 41809
-#   Reference Count: 2
-#   Registered Events: (none)
-#   ClippingRange: (342.503, 551.901)
-#   DirectionOfProjection: (-0.989617, 0.0138409, -0.143061)
-#   Distance: 434.742
-#   EyeAngle: 2
-#   FocalDisk: 1
-#   FocalPoint: (-33.7454, -18.4959, 15.5496)
-#   ViewShear: (0, 0, 1)
-#   ParallelProjection: Off
-#   ParallelScale: 112.52
-#   Position: (396.483, -24.5132, 77.7444)
-#   Stereo: Off
-#   Left Eye: 1
-#   Thickness: 209.398
-#   ViewAngle: 30
-#   UseHorizontalViewAngle: 0
-#   UserTransform: (none)
-# (none)
-#   ViewPlaneNormal: (0.989617, -0.0138409, 0.143061)
-#   ViewUp: (-0.137778, 0.192088, 0.971658)
-#   WindowCenter: (0, 0)
-#   UseOffAxisProjection: (0)
-#   ScreenBottomLeft: (-0.5, -0.5, -0.5)
-#   ScreenBottomRight: (0.5, -0.5, -0.5)
-#   ScreenTopRight: (0.5, 0.5, -0.5)
-#   EyeSeparation: (0.06)
-#   WorldToScreenMatrix: (0x10039f080
-#     Debug: Off
-#     Modified Time: 2419
-#     Reference Count: 1
-#     Registered Events: (none)
-#     Elements:
-#         1 0 0 0
-#         0 1 0 0
-#         0 0 1 0
-#         0 0 0 1
-#   )
-#   EyeTransformMatrix: (0x1003a03e0
-#     Debug: Off
-#     Modified Time: 2421
-#     Reference Count: 1
-#     Registered Events: (none)
-#     Elements:
-#         1 0 0 0
-#         0 1 0 0
-#         0 0 1 0
-#         0 0 0 1
-#   )
-#   ModelTransformMatrix: (0x1003a04c0
-#     Debug: Off
-#     Modified Time: 2423
-#     Reference Count: 1
-#     Registered Events: (none)
-#     Elements:
-#         1 0 0 0
-#         0 1 0 0
-#         0 0 1 0
-#         0 0 0 1
-#   )
-#
-#
-
 
 
 if __name__ == "__main__":
@@ -956,6 +814,7 @@ if __name__ == "__main__":
 
     tal_path = '/Users/m/data/eeg/R1111M/tal/R1111M_talLocs_database_bipol.mat'
 
-    lh_avg_surf, rh_avg_surf = extract_electrode_positions(tal_path=tal_path)
+    electrode_types =['D']
+    lh_elec_data, rh_elec_data = extract_electrode_positions(tal_path=tal_path, electrode_types=electrode_types)
 
-    BrainPlotExample(lh_avg_surf=lh_avg_surf, rh_avg_surf=rh_avg_surf)
+    BrainPlotExample(lh_elec_data=lh_elec_data, rh_elec_data=rh_elec_data,electrode_types=electrode_types)
