@@ -533,8 +533,8 @@ def extract_electrode_positions(tal_path, electrode_types=['D', 'G', 'S']):
     tal_reader = TalReader(filename=tal_path)
     tal_structs = tal_reader.read()
 
-    lh_selector = np.array(map(lambda loc: loc.startswith('Left'), tal_structs.Loc1))
-    rh_selector = np.array(map(lambda loc: loc.startswith('Right'), tal_structs.Loc1))
+    lh_selector = np.array(map(lambda loc: loc.upper().startswith('L'), tal_structs.tagName))
+    rh_selector = np.array(map(lambda loc: loc.upper().startswith('R'), tal_structs.tagName))
 
     electrode_types_lower = map(lambda t: t.lower(), electrode_types)
 
@@ -589,6 +589,7 @@ def divergent_color_lut(table_size=20, table_range=[0, 1]):
     return lut
 
 def cut_brain_hemi(hemi_elec_data,hemi_poly_data):
+
     depth_elec_data = hemi_elec_data[ (hemi_elec_data.eType=='D') | (hemi_elec_data.eType=='d')]
     print depth_elec_data
     print
@@ -604,9 +605,9 @@ def cut_brain_hemi(hemi_elec_data,hemi_poly_data):
     clipPlane = vtk.vtkPlane()
     clipPlane.SetNormal(0.0, 0.0, 1.0)
     # clipPlane.SetOrigin(0, 0, np.max(z_coords))
-    clipPlane.SetOrigin(np.max(x_coords), np.max(y_coords), np.max(z_coords))
+    # clipPlane.SetOrigin(np.max(x_coords), np.max(y_coords), np.max(z_coords))
 
-    # clipPlane.SetOrigin(0, 0, 0)
+    clipPlane.SetOrigin(0, 0, -500)
 
     clipper = vtk.vtkClipPolyData()
     clipper.SetInputData(hemi_poly_data)
@@ -623,7 +624,7 @@ def get_hemi_polydata(hemi='lh'):
     if hemi.startswith('l'):
         vreader.SetFileName('lh.pial.vtk')
     elif hemi.startswith('r'):
-        vreader.SetFileName('lh.pial.vtk')
+        vreader.SetFileName('rh.pial.vtk')
     else:
         raise RuntimeError('hemi argument must begin with letter "l" or "r" ')
 
@@ -632,6 +633,31 @@ def get_hemi_polydata(hemi='lh'):
     pd = vreader.GetOutput()
 
     return pd
+
+
+def get_electrode_vis_data(hemi_data, lut):
+
+    electrode_points = vtk.vtkPoints()
+    electrode_colors = vtk.vtkUnsignedCharArray()
+    electrode_colors.SetNumberOfComponents(3)
+
+    num_electrodes = len(hemi_data)
+
+    for i, avg_surf in enumerate(hemi_data.avgSurf):
+        # print avg_surf
+        # electrode_points.InsertNextPoint(avg_surf.x_snap, avg_surf.y_snap, avg_surf.z_snap)
+        electrode_points.InsertNextPoint(avg_surf.x_snap, avg_surf.y_snap, avg_surf.z_snap)
+
+        # electrode_colors.InsertNextTupleValue((255, 0, 0))
+        color_tuple = [0, 0, 0]
+        lut.GetColor(i, color_tuple)
+        # lut.GetColor(num_electrodes,color_tuple)
+
+        color_tuple = map(lambda x: int(round(x * 255)), color_tuple)
+
+        electrode_colors.InsertNextTupleValue(color_tuple)
+
+    return electrode_points, electrode_colors
 
 
 def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D', 'G', 'S']):
@@ -664,11 +690,13 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
     # pd = vreader.GetOutput()
     # # rps = vtk.vtkRegularPolygonSource(pd)
 
-    pd = get_hemi_polydata(hemi='l')
+    l_pd = get_hemi_polydata(hemi='l')
+    r_pd = get_hemi_polydata(hemi='r')
 
-    if len(electrode_types)==1 and electrode_types[0].lower()=='d':
-        # will cut brain
-        clipper = cut_brain_hemi(lh_elec_data,pd)
+    # brain cutter
+    # if len(electrode_types)==1 and electrode_types[0].lower()=='d':
+    #     # will cut brain
+    #     clipper = cut_brain_hemi(lh_elec_data,pd)
 
     # clipPlane = vtk.vtkPlane()
     # clipPlane.SetNormal(1.0, -1.0, -1.0)
@@ -679,34 +707,47 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
     # clipper.SetClipFunction(clipPlane)
     #
 
-    # brain_mapper = vtk.vtkPolyDataMapper()
-    #
-    # if vtk_major_version == 5:
-    #
-    #     brain_mapper.SetInput(pd)
-    #
-    # else:
-    #     brain_mapper.SetInputData(pd)
-
-
-    brain_mapper = vtk.vtkPolyDataMapper()
+    l_brain_mapper = vtk.vtkPolyDataMapper()
+    r_brain_mapper = vtk.vtkPolyDataMapper()
 
     if vtk_major_version <= 5:
 
-        # brain_mapper.SetInput(clipper)
-        brain_mapper.SetInputConnection(clipper.GetOutputPort())
+        l_brain_mapper.SetInput(l_pd)
+        r_brain_mapper.SetInput(r_pd)
 
     else:
-        brain_mapper.SetInputConnection(clipper.GetOutputPort())
+        l_brain_mapper.SetInputData(l_pd)
+        r_brain_mapper.SetInputData(r_pd)
 
-    brain_actor = vtk.vtkActor()
-    brain_actor.SetMapper(brain_mapper)
-    # brain_actor.SetAlpha(0.3)
-
-    brain_actor.GetProperty().SetOpacity(1.0)
-
-    ren.AddActor(brain_actor)
+    # brain cutter
+    # brain_mapper = vtk.vtkPolyDataMapper()
     #
+    # if vtk_major_version <= 5:
+    #
+    #     # brain_mapper.SetInput(clipper)
+    #     brain_mapper.SetInputConnection(clipper.GetOutputPort())
+    #
+    # else:
+    #     brain_mapper.SetInputConnection(clipper.GetOutputPort())
+
+    brain_opacity = 0.2
+
+    l_brain_actor = vtk.vtkActor()
+    l_brain_actor.SetMapper(l_brain_mapper)
+    l_brain_actor.GetProperty().SetOpacity(brain_opacity)
+    ren.AddActor(l_brain_actor)
+
+
+
+    r_brain_actor = vtk.vtkActor()
+    r_brain_actor.SetMapper(r_brain_mapper)
+    r_brain_actor.GetProperty().SetOpacity(brain_opacity)
+
+    ren.AddActor(r_brain_actor)
+
+
+    #
+
     cam = widget.GetRenderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     # inside left hemisphere
     cam.SetClippingRange((342.503, 551.901))
@@ -730,9 +771,9 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
 
     electrodeGrid = vtk.vtkUnstructuredGrid()
 
-    electrode_points = vtk.vtkPoints()
-    electrode_colors = vtk.vtkUnsignedCharArray()
-    electrode_colors.SetNumberOfComponents(3)
+    l_e_pts = vtk.vtkPoints()
+    lh_e_colors = vtk.vtkUnsignedCharArray()
+    lh_e_colors.SetNumberOfComponents(3)
 
     num_electrodes = len(lh_elec_data)
 
@@ -740,51 +781,86 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
     lut.SetTableRange(0, num_electrodes)
     lut.Build()
 
-    lut = divergent_color_lut(table_range=[0, num_electrodes])
+    # lut = divergent_color_lut(table_range=[0, num_electrodes])
+    lut = divergent_color_lut(table_range=[0, 120])
 
-    print lh_elec_data
-    for i, avg_surf in enumerate(lh_elec_data.avgSurf):
-        print avg_surf
-        electrode_points.InsertNextPoint(avg_surf.x_snap, avg_surf.y_snap, avg_surf.z_snap)
 
-        # electrode_colors.InsertNextTupleValue((255, 0, 0))
-        color_tuple = [0, 0, 0]
-        lut.GetColor(i, color_tuple)
-        # lut.GetColor(num_electrodes,color_tuple)
+    lh_e_pts , lh_e_colors = get_electrode_vis_data(hemi_data=lh_elec_data, lut=lut)
+    rh_e_pts , rh_e_colors = get_electrode_vis_data(hemi_data=rh_elec_data, lut=lut)
 
-        color_tuple = map(lambda x: int(round(x * 255)), color_tuple)
 
-        electrode_colors.InsertNextTupleValue(color_tuple)
+    # print lh_elec_data
+    # for i, avg_surf in enumerate(lh_elec_data.avgSurf):
+    #     print avg_surf
+    #     # electrode_points.InsertNextPoint(avg_surf.x_snap, avg_surf.y_snap, avg_surf.z_snap)
+    #     electrode_points.InsertNextPoint(avg_surf.x, avg_surf.y, avg_surf.z)
+    #
+    #     # electrode_colors.InsertNextTupleValue((255, 0, 0))
+    #     color_tuple = [0, 0, 0]
+    #     lut.GetColor(i, color_tuple)
+    #     # lut.GetColor(num_electrodes,color_tuple)
+    #
+    #     color_tuple = map(lambda x: int(round(x * 255)), color_tuple)
+    #
+    #     electrode_colors.InsertNextTupleValue(color_tuple)
 
-    glyphs = vtk.vtkGlyph3D()
+    e_glyph_shape = vtk.vtkSphereSource()
 
-    cone = vtk.vtkSphereSource()
+    
+
+
     # cone.SetResolution(5)
     # cone.SetHeight(2)
-    cone.SetRadius(3.0)
+    e_glyph_shape.SetRadius(3.0)
 
-    glyphs.SetSourceConnection(cone.GetOutputPort())
-    glyphs.SetColorModeToColorByScalar()
+    l_glyphs = vtk.vtkGlyph3D()
+    l_glyphs.SetSourceConnection(e_glyph_shape.GetOutputPort())
+    l_glyphs.SetColorModeToColorByScalar()
 
-    centroidsPD = vtk.vtkPolyData()
-    centroidsPD.SetPoints(electrode_points)
-    centroidsPD.GetPointData().SetScalars(electrode_colors)
+    l_centroidsPD = vtk.vtkPolyData()
+    l_centroidsPD.SetPoints(lh_e_pts)
+    l_centroidsPD.GetPointData().SetScalars(lh_e_colors)
+
+    r_glyphs = vtk.vtkGlyph3D()
+    r_glyphs.SetSourceConnection(e_glyph_shape.GetOutputPort())
+    r_glyphs.SetColorModeToColorByScalar()
+
+    r_centroidsPD = vtk.vtkPolyData()
+    r_centroidsPD.SetPoints(rh_e_pts)
+    r_centroidsPD.GetPointData().SetScalars(rh_e_colors)
+
 
     if vtk_major_version == 5:
 
-        glyphs.SetInput(centroidsPD)
+        l_glyphs.SetInput(l_centroidsPD)
+        r_glyphs.SetInput(r_centroidsPD)
+        
     else:
-        glyphs.SetInputData(centroidsPD)
+        l_glyphs.SetInputData(l_centroidsPD)
+        r_glyphs.SetInputData(r_centroidsPD)
 
-    glyphs.ScalingOff()  # IMPORTANT
-    glyphs.Update()
+    l_glyphs.ScalingOff()  # IMPORTANT
+    l_glyphs.Update()
+    
+    r_glyphs.ScalingOff()  # IMPORTANT
+    r_glyphs.Update()
+    
 
-    glyphsMapper = vtk.vtkPolyDataMapper()
-    glyphsMapper.SetInputConnection(glyphs.GetOutputPort())
+    l_glyphsMapper = vtk.vtkPolyDataMapper()
+    l_glyphsMapper.SetInputConnection(l_glyphs.GetOutputPort())
+    
+    r_glyphsMapper = vtk.vtkPolyDataMapper()
+    r_glyphsMapper.SetInputConnection(r_glyphs.GetOutputPort())
+    
+    
+    l_electrodes_actor = vtk.vtkActor()
+    l_electrodes_actor.SetMapper(l_glyphsMapper)
+    ren.AddActor(l_electrodes_actor)
 
-    electrodes_actor = vtk.vtkActor()
-    electrodes_actor.SetMapper(glyphsMapper)
-    ren.AddActor(electrodes_actor)
+    r_electrodes_actor = vtk.vtkActor()
+    r_electrodes_actor.SetMapper(r_glyphsMapper)
+    ren.AddActor(r_electrodes_actor)
+
 
     ####################### AXES
     axes = vtk.vtkAxesActor()
@@ -812,9 +888,10 @@ if __name__ == "__main__":
     # QVTKRenderWidgetConeExample()
     sys.path.append('/Users/m/PTSA_NEW_GIT')
 
-    tal_path = '/Users/m/data/eeg/R1111M/tal/R1111M_talLocs_database_bipol.mat'
+    # tal_path = '/Users/m/data/eeg/R1111M/tal/R1111M_talLocs_database_bipol.mat'
+    tal_path = '/Users/m/data/eeg/R1060M/tal/R1060M_talLocs_database_bipol.mat'
 
-    electrode_types =['D']
+    electrode_types =['D','S','G']
     lh_elec_data, rh_elec_data = extract_electrode_positions(tal_path=tal_path, electrode_types=electrode_types)
 
     BrainPlotExample(lh_elec_data=lh_elec_data, rh_elec_data=rh_elec_data,electrode_types=electrode_types)
