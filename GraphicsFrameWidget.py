@@ -100,8 +100,12 @@ class GraphicsFrameWidget(QtGui.QFrame,ui_GraphicsFrame.Ui_GraphicsFrame):
         self.take_screenshot()
 
 
-    def take_screenshot(self):
-        filename=str(self.screenshotLE.text())
+    def take_screenshot(self,filename=''):
+        if not filename:
+
+            filename=str(self.screenshotLE.text())
+
+
         if filename =='':
             return
         else:
@@ -126,6 +130,11 @@ class GraphicsFrameWidget(QtGui.QFrame,ui_GraphicsFrame.Ui_GraphicsFrame):
 
             writer.Write()
 
+    def save_camera_setting(self,filename=''):
+        pass
+
+    def load_camera_settings(self,filename=''):
+        pass
 
 
 if __name__=='__main__':
