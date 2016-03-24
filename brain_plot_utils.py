@@ -943,9 +943,33 @@ class Electrodes(object):
             self.electrode_points.InsertNextPoint(loc[0],loc[1],loc[2])
 
     def set_electrodes_color(self,c=[255,0,0]):
+        self.electrode_colors = vtk.vtkUnsignedCharArray()
+        self.electrode_colors.SetNumberOfComponents(3)
 
         for i in range(self.electrode_points.GetNumberOfPoints()):
             self.electrode_colors.InsertNextTupleValue(c)
+
+    def color_electrodes_by_scalars(self,scalar_array,lut=None):
+
+        s_array = np.array(scalar_array,dtype=np.float)
+
+        self.electrode_colors = vtk.vtkUnsignedCharArray()
+        self.electrode_colors.SetNumberOfComponents(3)
+
+        if lut is None:
+            min, max = np.min(s_array) , np.max(s_array)
+            lut = divergent_color_lut(table_size=len(s_array), table_range=[min,max])
+
+        for scalar in scalar_array:
+
+            color_tuple = [0, 0, 0]
+            lut.GetColor(scalar, color_tuple)
+
+            color_tuple = map(lambda x: int(round(x * 255)), color_tuple)
+
+            self.electrode_colors.InsertNextTupleValue(color_tuple)
+
+
 
     def get_actor(self):
 
@@ -1091,6 +1115,7 @@ if __name__ == "__main__":
     bp.add_actor(depth_elec.get_actor())
 
 
+
     strip_elec = Electrodes(shape='sphere')
     # elec.set_electrodes_locations(loc_array=[[0,0,0]])
     strip_elec.set_electrodes_locations(loc_array=strip_lh_elec_data)
@@ -1100,7 +1125,9 @@ if __name__ == "__main__":
     grid_elec = Electrodes(shape='sphere')
     # elec.set_electrodes_locations(loc_array=[[0,0,0]])
     grid_elec.set_electrodes_locations(loc_array=grid_lh_elec_data)
-    grid_elec.set_electrodes_color(c=[255,0,0])
+
+    grid_elec.color_electrodes_by_scalars(scalar_array=np.arange(len(grid_lh_elec_data))/10.0)
+    # grid_elec.set_electrodes_color(c=[255,0,0])
     bp.add_actor(grid_elec.get_actor())
 
 
