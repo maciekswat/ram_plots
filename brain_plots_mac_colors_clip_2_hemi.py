@@ -27,13 +27,9 @@ Changes by Phil Thompson, Mar. 2008
  Added cursor support.
 """
 
-
-
 import sys
 import os
 import numpy as np
-
-
 
 # import Configuration
 
@@ -67,8 +63,6 @@ setVTKPaths()
 
 from PyQt4 import QtCore, QtGui, QtOpenGL
 import vtk
-
-vtk_major_version = vtk.vtkVersion().GetVTKMajorVersion()
 
 
 # class QVTKRenderWindowInteractor(QtOpenGL.QGLWidget):  # Windows & Linux (I think)
@@ -383,44 +377,12 @@ class QVTKRenderWindowInteractor(QtGui.QWidget):  # Mac
         elif self._ActiveButton == QtCore.Qt.MidButton:
             self._Iren.MiddleButtonPressEvent()
 
-    def showEvent(self, ev):
-        super(QVTKRenderWindowInteractor,self).showEvent(ev)
-
-
-
-    def take_screenshot(self,filename):
-        ren = self.GetRenderWindow().GetRenderers().GetFirstRenderer()
-        renderLarge = vtk.vtkRenderLargeImage()
-        if vtk_major_version <= 5:
-            renderLarge.SetInputData(ren)
-        else:
-            renderLarge.SetInput(ren)
-
-
-        renderLarge.SetMagnification(1)
-
-        # We write out the image which causes the rendering to occur. If you
-        # watch your screen you might see the pieces being rendered right
-        # after one another.
-        writer = vtk.vtkPNGWriter()
-        writer.SetInputConnection(renderLarge.GetOutputPort())
-        # # # print "GOT HERE fileName=",fileName
-        writer.SetFileName(filename)
-
-        writer.Write()
-
-
-
-
-
-
     def mousePressEvent(self, ev):
 
         print self.GetRenderWindow()
         rw = self.GetRenderWindow()
         active_camera = rw.GetRenderers().GetFirstRenderer().GetActiveCamera()
         print active_camera
-
         self.mousePressEventFcn(ev)
 
 
@@ -566,25 +528,24 @@ def QVTKRenderWidgetConeExample():
     app.exec_()
 
 
-def extract_electrode_positions(tal_path, electrode_types=['D', 'G', 'S']):
+def extract_electrode_positions(tal_path, electrode_types=['D', 'G', 'S'], hemi=['R','L']):
     from ptsa.data.readers import TalReader
     tal_reader = TalReader(filename=tal_path)
     tal_structs = tal_reader.read()
-
-    lh_selector = np.array(map(lambda loc: loc.upper().startswith('L'), tal_structs.tagName))
-    rh_selector = np.array(map(lambda loc: loc.upper().startswith('R'), tal_structs.tagName))
 
     electrode_types_lower = map(lambda t: t.lower(), electrode_types)
 
     electrode_type_selector = np.array(map(lambda eType: eType.lower() in electrode_types_lower, tal_structs.eType))
 
-    lh_data = tal_structs[['avgSurf','eType']]
-    rh_data = tal_structs[['avgSurf','eType']]
+    h_data = tal_structs[['avgSurf','eType']]
 
-    lh_data = lh_data[lh_selector & electrode_type_selector]
-    rh_data = rh_data[rh_selector & electrode_type_selector]
 
-    return lh_data,rh_data
+    h_data = h_data[electrode_type_selector]
+
+
+
+
+    return h_data
 
 def divergent_color_lut(table_size=20, table_range=[0, 1]):
     ctf = vtk.vtkColorTransferFunction()
@@ -677,64 +638,6 @@ def get_electrode_vis_data(hemi_data, lut):
 
     return electrode_points, electrode_colors
 
-def get_electrode_glyphs(e_pts,e_colors):
-
-    e_glyph_shape = vtk.vtkSphereSource()
-
-    # cone.SetResolution(5)
-    # cone.SetHeight(2)
-    e_glyph_shape.SetRadius(3.0)
-
-    glyphs = vtk.vtkGlyph3D()
-    glyphs.SetSourceConnection(e_glyph_shape.GetOutputPort())
-    glyphs.SetColorModeToColorByScalar()
-
-    centroidsPD = vtk.vtkPolyData()
-    centroidsPD.SetPoints(e_pts)
-    centroidsPD.GetPointData().SetScalars(e_colors)
-
-    if vtk_major_version == 5:
-
-        glyphs.SetInput(centroidsPD)
-
-
-    else:
-        glyphs.SetInputData(centroidsPD)
-
-
-    glyphs.ScalingOff()  # IMPORTANT
-    glyphs.Update()
-
-    glyphs.ScalingOff()  # IMPORTANT
-    glyphs.Update()
-
-
-
-    return glyphs
-
-# def take_screenshot(ren,filename):
-#
-#     renderLarge = vtk.vtkRenderLargeImage()
-#     if vtk_major_version <= 5:
-#         renderLarge.SetInputData(ren)
-#     else:
-#         renderLarge.SetInput(ren)
-#
-#
-#     renderLarge.SetMagnification(1)
-#
-#     # We write out the image which causes the rendering to occur. If you
-#     # watch your screen you might see the pieces being rendered right
-#     # after one another.
-#     writer = vtk.vtkPNGWriter()
-#     writer.SetInputConnection(renderLarge.GetOutputPort())
-#     # # # print "GOT HERE fileName=",fileName
-#     writer.SetFileName(filename)
-#
-#     writer.Write()
-
-
-
 
 def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D', 'G', 'S']):
     """A simple example that uses the QVTKRenderWindowInteractor class."""
@@ -756,6 +659,15 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
     ren = vtk.vtkRenderer()
     widget.GetRenderWindow().AddRenderer(ren)
 
+
+
+    # vreader = vtk.vtkPolyDataReader()
+    # # vreader.SetFileName('lh.vtk')
+    # vreader.SetFileName('lh.pial.vtk')
+    # vreader.Update()
+    #
+    # pd = vreader.GetOutput()
+    # # rps = vtk.vtkRegularPolygonSource(pd)
 
     l_pd = get_hemi_polydata(hemi='l')
     r_pd = get_hemi_polydata(hemi='r')
@@ -816,14 +728,39 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
     #
 
     cam = widget.GetRenderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
+    # inside left hemisphere
+    cam.SetClippingRange((342.503, 551.901))
+    cam.SetFocalPoint(-33.7454, -18.4959, 15.5496)
+    cam.SetPosition(396.483, -24.5132, 77.7444)
+    cam.SetViewUp(-0.137778, 0.192088, 0.971658)
 
-    # top view
-    cam.SetClippingRange((312.385, 827.346))
-    cam.SetFocalPoint(23.9803, -13.4557, 27.6483)
-    cam.SetPosition(-2.03758, 20.7186, 539.993)
-    cam.SetViewUp(0.0346923, 0.997298, -0.0647596)
+    # # # outside left hemisphere
+    # # cam.SetClippingRange(280.84, 629.522)
+    # # cam.SetFocalPoint(-33.7454, -18.4959, 15.5496)
+    # # cam.SetPosition(-423.573, 88.4119, 175.569)
+    # # cam.SetViewUp(0.378739, -0.00424452, 0.925494)
+    #
+    #
+    # from the top left hemisphere
+    # cam.SetClippingRange(296.138, 610.266)
+    # cam.SetFocalPoint(-33.7454, -18.4959, 15.5496)
+    # cam.SetPosition(1.36993, -35.0308, 448.556)
+    # cam.SetViewUp(-0.086411, -0.995777, -0.0310175)
 
 
+    electrodeGrid = vtk.vtkUnstructuredGrid()
+
+    l_e_pts = vtk.vtkPoints()
+    lh_e_colors = vtk.vtkUnsignedCharArray()
+    lh_e_colors.SetNumberOfComponents(3)
+
+    num_electrodes = len(lh_elec_data)
+
+    lut = vtk.vtkLookupTable()
+    lut.SetTableRange(0, num_electrodes)
+    lut.Build()
+
+    # lut = divergent_color_lut(table_range=[0, num_electrodes])
     lut = divergent_color_lut(table_range=[0, 120])
 
 
@@ -831,10 +768,62 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
     rh_e_pts , rh_e_colors = get_electrode_vis_data(hemi_data=rh_elec_data, lut=lut)
 
 
+    # print lh_elec_data
+    # for i, avg_surf in enumerate(lh_elec_data.avgSurf):
+    #     print avg_surf
+    #     # electrode_points.InsertNextPoint(avg_surf.x_snap, avg_surf.y_snap, avg_surf.z_snap)
+    #     electrode_points.InsertNextPoint(avg_surf.x, avg_surf.y, avg_surf.z)
+    #
+    #     # electrode_colors.InsertNextTupleValue((255, 0, 0))
+    #     color_tuple = [0, 0, 0]
+    #     lut.GetColor(i, color_tuple)
+    #     # lut.GetColor(num_electrodes,color_tuple)
+    #
+    #     color_tuple = map(lambda x: int(round(x * 255)), color_tuple)
+    #
+    #     electrode_colors.InsertNextTupleValue(color_tuple)
 
-    l_glyphs = get_electrode_glyphs(e_pts=lh_e_pts, e_colors=lh_e_colors)
-    r_glyphs = get_electrode_glyphs(e_pts=rh_e_pts, e_colors=rh_e_colors)
+    e_glyph_shape = vtk.vtkSphereSource()
 
+    
+
+
+    # cone.SetResolution(5)
+    # cone.SetHeight(2)
+    e_glyph_shape.SetRadius(3.0)
+
+    l_glyphs = vtk.vtkGlyph3D()
+    l_glyphs.SetSourceConnection(e_glyph_shape.GetOutputPort())
+    l_glyphs.SetColorModeToColorByScalar()
+
+    l_centroidsPD = vtk.vtkPolyData()
+    l_centroidsPD.SetPoints(lh_e_pts)
+    l_centroidsPD.GetPointData().SetScalars(lh_e_colors)
+
+    r_glyphs = vtk.vtkGlyph3D()
+    r_glyphs.SetSourceConnection(e_glyph_shape.GetOutputPort())
+    r_glyphs.SetColorModeToColorByScalar()
+
+    r_centroidsPD = vtk.vtkPolyData()
+    r_centroidsPD.SetPoints(rh_e_pts)
+    r_centroidsPD.GetPointData().SetScalars(rh_e_colors)
+
+
+    if vtk_major_version == 5:
+
+        l_glyphs.SetInput(l_centroidsPD)
+        r_glyphs.SetInput(r_centroidsPD)
+        
+    else:
+        l_glyphs.SetInputData(l_centroidsPD)
+        r_glyphs.SetInputData(r_centroidsPD)
+
+    l_glyphs.ScalingOff()  # IMPORTANT
+    l_glyphs.Update()
+    
+    r_glyphs.ScalingOff()  # IMPORTANT
+    r_glyphs.Update()
+    
 
     l_glyphsMapper = vtk.vtkPolyDataMapper()
     l_glyphsMapper.SetInputConnection(l_glyphs.GetOutputPort())
@@ -860,12 +849,10 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
 
     axes.SetUserTransform(transform)
 
-    axes.AxisLabelsOn()
+    axes.AxisLabelsOff()
 
     ren.AddActor(axes)
-
-
-    widget.resize(1000,1000)
+    widget.resize(600,600)
 
     # show the widget
     widget.raise_()
@@ -880,8 +867,8 @@ if __name__ == "__main__":
     # QVTKRenderWidgetConeExample()
     sys.path.append('/Users/m/PTSA_NEW_GIT')
 
-    tal_path = '/Users/m/data/eeg/R1111M/tal/R1111M_talLocs_database_bipol.mat'
-    # tal_path = '/Users/m/data/eeg/R1060M/tal/R1060M_talLocs_database_bipol.mat'
+    # tal_path = '/Users/m/data/eeg/R1111M/tal/R1111M_talLocs_database_bipol.mat'
+    tal_path = '/Users/m/data/eeg/R1060M/tal/R1060M_talLocs_database_bipol.mat'
 
     electrode_types =['D','S','G']
     lh_elec_data, rh_elec_data = extract_electrode_positions(tal_path=tal_path, electrode_types=electrode_types)

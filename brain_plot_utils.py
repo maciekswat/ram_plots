@@ -231,6 +231,7 @@ class QVTKRenderWindowInteractor(QtGui.QWidget):  # Mac
 
         self.mousePressEventFcn = self.mousePressEvent2DStyle
 
+        self.screenshot_filename = ''
     #        print MODULENAME,'   winSize2 = ',self._RenderWindow.GetSize()   # still (0,0)
 
     def __getattr__(self, attr):
@@ -384,11 +385,26 @@ class QVTKRenderWindowInteractor(QtGui.QWidget):  # Mac
             self._Iren.MiddleButtonPressEvent()
 
     def showEvent(self, ev):
+
         super(QVTKRenderWindowInteractor,self).showEvent(ev)
 
+        if self.screenshot_filename:
+            QtCore.QTimer.singleShot(200,self.take_screenshot)
+
+            QtCore.QTimer.singleShot(400,self.close)
 
 
-    def take_screenshot(self,filename):
+
+
+
+    def set_screenshot_filename(self,filename):
+        self.screenshot_filename = filename
+
+    def take_screenshot(self):
+
+        if not self.screenshot_filename:
+            return
+
         ren = self.GetRenderWindow().GetRenderers().GetFirstRenderer()
         renderLarge = vtk.vtkRenderLargeImage()
         if vtk_major_version <= 5:
@@ -405,7 +421,7 @@ class QVTKRenderWindowInteractor(QtGui.QWidget):  # Mac
         writer = vtk.vtkPNGWriter()
         writer.SetInputConnection(renderLarge.GetOutputPort())
         # # # print "GOT HERE fileName=",fileName
-        writer.SetFileName(filename)
+        writer.SetFileName(self.screenshot_filename)
 
         writer.Write()
 
@@ -518,52 +534,6 @@ class QVTKRenderWindowInteractor(QtGui.QWidget):  # Mac
     def Render(self):
         self.update()
 
-
-def QVTKRenderWidgetConeExample():
-    """A simple example that uses the QVTKRenderWindowInteractor class."""
-
-    # every QT app needs an app
-    app = QtGui.QApplication(['QVTKRenderWindowInteractor'])
-
-    vreader = vtk.vtkXMLPolyDataReader()
-    vreader.SetFileName('lh.vtk')
-    vreader
-    reader1 = VTKFileReader()
-    reader1.initialize(vtkFile_l)
-
-    # create the widget
-    widget = QVTKRenderWindowInteractor()
-
-    widget.setMouseInteractionSchemeTo3D()
-
-    widget.Initialize()
-    widget.Start()
-    # if you dont want the 'q' key to exit comment this.
-    widget.AddObserver("ExitEvent", lambda o, e, a=app: a.quit())
-
-    ren = vtk.vtkRenderer()
-    widget.GetRenderWindow().AddRenderer(ren)
-
-    cone = vtk.vtkConeSource()
-    cone.SetResolution(8)
-
-    coneMapper = vtk.vtkPolyDataMapper()
-
-    VTK_MAJOR_VERSION = vtk.vtkVersion.GetVTKMajorVersion()
-    if VTK_MAJOR_VERSION >= 6:
-        coneMapper.SetInputData(cone.GetOutput())
-    else:
-        coneMapper.SetInput(cone.GetOutput())
-
-    coneActor = vtk.vtkActor()
-    coneActor.SetMapper(coneMapper)
-
-    ren.AddActor(coneActor)
-
-    # show the widget
-    widget.show()
-    # start event processing
-    app.exec_()
 
 
 def extract_electrode_positions(tal_path, electrode_types=['D', 'G', 'S']):
@@ -736,7 +706,7 @@ def get_electrode_glyphs(e_pts,e_colors):
 
 
 
-def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D', 'G', 'S']):
+def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D', 'G', 'S'],filename=''):
     """A simple example that uses the QVTKRenderWindowInteractor class."""
 
     vtk_major_version = vtk.vtkVersion().GetVTKMajorVersion()
@@ -747,6 +717,8 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
     widget = QVTKRenderWindowInteractor()
 
     widget.setMouseInteractionSchemeTo3D()
+
+    widget.set_screenshot_filename(filename=filename)
 
     widget.Initialize()
     widget.Start()
@@ -886,4 +858,4 @@ if __name__ == "__main__":
     electrode_types =['D','S','G']
     lh_elec_data, rh_elec_data = extract_electrode_positions(tal_path=tal_path, electrode_types=electrode_types)
 
-    BrainPlotExample(lh_elec_data=lh_elec_data, rh_elec_data=rh_elec_data,electrode_types=electrode_types)
+    BrainPlotExample(lh_elec_data=lh_elec_data, rh_elec_data=rh_elec_data,electrode_types=electrode_types,filename='screenshot2.png')
