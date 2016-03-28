@@ -55,9 +55,9 @@
       </widget>
      </item>
      <item>
-      <widget class="QRadioButton" name="pos_dir_RB">
+      <widget class="QRadioButton" name="flip_visible_part_RB">
        <property name="text">
-        <string>+</string>
+        <string>flip_visible_part</string>
        </property>
       </widget>
      </item>

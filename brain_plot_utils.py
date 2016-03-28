@@ -882,10 +882,7 @@ class Hemisphere(object):
         return self.hemi_actor
 
 
-def extract_electrode_positions_for_single_subject(tal_path, electrode_types=['D', 'G', 'S']):
-    from ptsa.data.readers import TalReader
-    tal_reader = TalReader(filename=tal_path)
-    tal_structs = tal_reader.read()
+def extract_electrode_positions_for_single_subject(tal_structs, electrode_types=['D', 'G', 'S']):
 
     lh_selector = np.array(map(lambda loc: loc.upper().startswith('L'), tal_structs.tagName))
     rh_selector = np.array(map(lambda loc: loc.upper().startswith('R'), tal_structs.tagName))
@@ -929,6 +926,7 @@ class Electrodes(object):
             self.e_glyph_shape = vtk.vtkConeSource()
             self.e_glyph_shape.SetResolution(5)
             self.e_glyph_shape.SetHeight(5)
+            self.e_glyph_shape.SetRadius(5)
 
         self.opacity = None
 
@@ -976,6 +974,7 @@ class Electrodes(object):
 
 
     def set_electrodes_locations(self, loc_array):
+
         for loc in loc_array:
             self.electrode_points.InsertNextPoint(loc[0], loc[1], loc[2])
 
