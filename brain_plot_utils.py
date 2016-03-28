@@ -27,13 +27,9 @@ Changes by Phil Thompson, Mar. 2008
  Added cursor support.
 """
 
-
-
 import sys
 import os
 import numpy as np
-
-
 
 # import Configuration
 
@@ -232,6 +228,7 @@ class QVTKRenderWindowInteractor(QtGui.QWidget):  # Mac
         self.mousePressEventFcn = self.mousePressEvent2DStyle
 
         self.screenshot_filename = ''
+
     #        print MODULENAME,'   winSize2 = ',self._RenderWindow.GetSize()   # still (0,0)
 
     def __getattr__(self, attr):
@@ -386,18 +383,14 @@ class QVTKRenderWindowInteractor(QtGui.QWidget):  # Mac
 
     def showEvent(self, ev):
 
-        super(QVTKRenderWindowInteractor,self).showEvent(ev)
+        super(QVTKRenderWindowInteractor, self).showEvent(ev)
 
         if self.screenshot_filename:
-            QtCore.QTimer.singleShot(200,self.take_screenshot)
+            QtCore.QTimer.singleShot(200, self.take_screenshot)
 
-            QtCore.QTimer.singleShot(400,self.close)
+            QtCore.QTimer.singleShot(400, self.close)
 
-
-
-
-
-    def set_screenshot_filename(self,filename):
+    def set_screenshot_filename(self, filename):
         self.screenshot_filename = filename
 
     def take_screenshot(self):
@@ -412,7 +405,6 @@ class QVTKRenderWindowInteractor(QtGui.QWidget):  # Mac
         else:
             renderLarge.SetInput(ren)
 
-
         renderLarge.SetMagnification(1)
 
         # We write out the image which causes the rendering to occur. If you
@@ -424,11 +416,6 @@ class QVTKRenderWindowInteractor(QtGui.QWidget):  # Mac
         writer.SetFileName(self.screenshot_filename)
 
         writer.Write()
-
-
-
-
-
 
     def mousePressEvent(self, ev):
 
@@ -535,7 +522,6 @@ class QVTKRenderWindowInteractor(QtGui.QWidget):  # Mac
         self.update()
 
 
-
 def extract_electrode_positions(tal_path, electrode_types=['D', 'G', 'S']):
     from ptsa.data.readers import TalReader
     tal_reader = TalReader(filename=tal_path)
@@ -548,13 +534,14 @@ def extract_electrode_positions(tal_path, electrode_types=['D', 'G', 'S']):
 
     electrode_type_selector = np.array(map(lambda eType: eType.lower() in electrode_types_lower, tal_structs.eType))
 
-    lh_data = tal_structs[['avgSurf','eType']]
-    rh_data = tal_structs[['avgSurf','eType']]
+    lh_data = tal_structs[['avgSurf', 'eType']]
+    rh_data = tal_structs[['avgSurf', 'eType']]
 
     lh_data = lh_data[lh_selector & electrode_type_selector]
     rh_data = rh_data[rh_selector & electrode_type_selector]
 
-    return lh_data,rh_data
+    return lh_data, rh_data
+
 
 def divergent_color_lut(table_size=20, table_range=[0, 1]):
     ctf = vtk.vtkColorTransferFunction()
@@ -576,19 +563,19 @@ def divergent_color_lut(table_size=20, table_range=[0, 1]):
 
     return lut
 
-def cut_brain_hemi(hemi_elec_data,hemi_poly_data):
 
-    depth_elec_data = hemi_elec_data[ (hemi_elec_data.eType=='D') | (hemi_elec_data.eType=='d')]
+def cut_brain_hemi(hemi_elec_data, hemi_poly_data):
+    depth_elec_data = hemi_elec_data[(hemi_elec_data.eType == 'D') | (hemi_elec_data.eType == 'd')]
     print depth_elec_data
     print
 
-    x_coords = np.array([avg_surf.x_snap for avg_surf in depth_elec_data.avgSurf],dtype=np.float)
-    y_coords = np.array([avg_surf.y_snap for avg_surf in depth_elec_data.avgSurf],dtype=np.float)
-    z_coords = np.array([avg_surf.z_snap for avg_surf in depth_elec_data.avgSurf],dtype=np.float)
+    x_coords = np.array([avg_surf.x_snap for avg_surf in depth_elec_data.avgSurf], dtype=np.float)
+    y_coords = np.array([avg_surf.y_snap for avg_surf in depth_elec_data.avgSurf], dtype=np.float)
+    z_coords = np.array([avg_surf.z_snap for avg_surf in depth_elec_data.avgSurf], dtype=np.float)
 
-    x_min, x_max = np.min(x_coords),np.max(x_coords)
-    y_min, y_max = np.min(y_coords),np.max(y_coords)
-    z_min, z_max = np.min(z_coords),np.max(z_coords)
+    x_min, x_max = np.min(x_coords), np.max(x_coords)
+    y_min, y_max = np.min(y_coords), np.max(y_coords)
+    z_min, z_max = np.min(z_coords), np.max(z_coords)
 
     clipPlane = vtk.vtkPlane()
     clipPlane.SetNormal(0.0, 0.0, 1.0)
@@ -604,9 +591,7 @@ def cut_brain_hemi(hemi_elec_data,hemi_poly_data):
     return clipper
 
 
-
 def get_hemi_polydata(hemi='lh'):
-
     vreader = vtk.vtkPolyDataReader()
     # vreader.SetFileName('lh.vtk')
     if hemi.startswith('l'):
@@ -624,7 +609,6 @@ def get_hemi_polydata(hemi='lh'):
 
 
 def get_electrode_vis_data(hemi_data, lut):
-
     electrode_points = vtk.vtkPoints()
     electrode_colors = vtk.vtkUnsignedCharArray()
     electrode_colors.SetNumberOfComponents(3)
@@ -647,8 +631,8 @@ def get_electrode_vis_data(hemi_data, lut):
 
     return electrode_points, electrode_colors
 
-def get_electrode_glyphs(e_pts,e_colors):
 
+def get_electrode_glyphs(e_pts, e_colors):
     e_glyph_shape = vtk.vtkSphereSource()
 
     # cone.SetResolution(5)
@@ -671,16 +655,14 @@ def get_electrode_glyphs(e_pts,e_colors):
     else:
         glyphs.SetInputData(centroidsPD)
 
-
     glyphs.ScalingOff()  # IMPORTANT
     glyphs.Update()
 
     glyphs.ScalingOff()  # IMPORTANT
     glyphs.Update()
-
-
 
     return glyphs
+
 
 # def take_screenshot(ren,filename):
 #
@@ -706,7 +688,7 @@ def get_electrode_glyphs(e_pts,e_colors):
 
 
 
-def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D', 'G', 'S'],filename=''):
+def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D', 'G', 'S'], filename=''):
     """A simple example that uses the QVTKRenderWindowInteractor class."""
 
     vtk_major_version = vtk.vtkVersion().GetVTKMajorVersion()
@@ -727,7 +709,6 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
 
     ren = vtk.vtkRenderer()
     widget.GetRenderWindow().AddRenderer(ren)
-
 
     l_pd = get_hemi_polydata(hemi='l')
     r_pd = get_hemi_polydata(hemi='r')
@@ -776,14 +757,11 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
     l_brain_actor.GetProperty().SetOpacity(brain_opacity)
     ren.AddActor(l_brain_actor)
 
-
-
     r_brain_actor = vtk.vtkActor()
     r_brain_actor.SetMapper(r_brain_mapper)
     r_brain_actor.GetProperty().SetOpacity(brain_opacity)
 
     ren.AddActor(r_brain_actor)
-
 
     #
 
@@ -795,26 +773,20 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
     cam.SetPosition(-2.03758, 20.7186, 539.993)
     cam.SetViewUp(0.0346923, 0.997298, -0.0647596)
 
-
     lut = divergent_color_lut(table_range=[0, 120])
 
-
-    lh_e_pts , lh_e_colors = get_electrode_vis_data(hemi_data=lh_elec_data, lut=lut)
-    rh_e_pts , rh_e_colors = get_electrode_vis_data(hemi_data=rh_elec_data, lut=lut)
-
-
+    lh_e_pts, lh_e_colors = get_electrode_vis_data(hemi_data=lh_elec_data, lut=lut)
+    rh_e_pts, rh_e_colors = get_electrode_vis_data(hemi_data=rh_elec_data, lut=lut)
 
     l_glyphs = get_electrode_glyphs(e_pts=lh_e_pts, e_colors=lh_e_colors)
     r_glyphs = get_electrode_glyphs(e_pts=rh_e_pts, e_colors=rh_e_colors)
 
-
     l_glyphsMapper = vtk.vtkPolyDataMapper()
     l_glyphsMapper.SetInputConnection(l_glyphs.GetOutputPort())
-    
+
     r_glyphsMapper = vtk.vtkPolyDataMapper()
     r_glyphsMapper.SetInputConnection(r_glyphs.GetOutputPort())
-    
-    
+
     l_electrodes_actor = vtk.vtkActor()
     l_electrodes_actor.SetMapper(l_glyphsMapper)
     ren.AddActor(l_electrodes_actor)
@@ -822,7 +794,6 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
     r_electrodes_actor = vtk.vtkActor()
     r_electrodes_actor.SetMapper(r_glyphsMapper)
     ren.AddActor(r_electrodes_actor)
-
 
     ####################### AXES
     axes = vtk.vtkAxesActor()
@@ -836,8 +807,7 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
 
     ren.AddActor(axes)
 
-
-    widget.resize(1000,1000)
+    widget.resize(1000, 1000)
 
     # show the widget
     widget.raise_()
@@ -849,39 +819,67 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
 
 
 class Hemisphere(object):
-    def __init__(self,hemi='l'):
-
+    def __init__(self, hemi='l'):
 
         self.pd = get_hemi_polydata(hemi=hemi)
 
+        self.bounds = self.pd.GetBounds()
 
+        # self.hemi_mapper = vtk.vtkPolyDataMapper()
+        #
+        # if vtk_major_version <= 5:
+        #
+        #     self.hemi_mapper.SetInput(self.pd)
+        #
+        #
+        # else:
+        #     self.hemi_mapper.SetInputData(self.pd)
 
-        self.hemi_mapper = vtk.vtkPolyDataMapper()
-
-
-        if vtk_major_version <= 5:
-
-            self.hemi_mapper.SetInput(self.pd)
-
-
-        else:
-            self.hemi_mapper.SetInputData(self.pd)
-
-
-        self.hemi_actor = vtk.vtkActor()
-        self.hemi_actor.SetMapper(self.hemi_mapper)
+        # self.hemi_actor = vtk.vtkActor()
+        # self.hemi_actor.SetMapper(self.hemi_mapper)
         # l_brain_actor.GetProperty().SetOpacity(brain_opacity)
 
+        self.opacity = None
 
-    def set_opacity(self,o):
-        self.hemi_actor.GetProperty().SetOpacity(o)
+        self.color = None
 
-    def set_color(self,c):
-        self.hemi_actor.GetProperty().SetColor(c)
+    def get_polydata_mapper(self):
+
+        self.hemi_mapper = vtk.vtkPolyDataMapper()
+        self.hemi_mapper.SetInputData(self.pd)
+
+        return self.hemi_mapper
+
+    def get_bounds(self):
+        return self.bounds
+
+    def get_min_max(self, axis='x'):
+
+        if axis.lower() == 'x':
+            return self.bounds[0], self.bounds[1]
+        elif axis.lower() == 'y':
+            return self.bounds[2], self.bounds[3]
+        elif axis.lower() == 'z':
+            return self.bounds[4], self.bounds[5]
+
+        raise RuntimeError('axis string has to be x,y,or z')
+
+    def get_opacity(self):
+        return self.opacity
+
+    def get_color(self):
+        return self.color
+
+    def set_opacity(self, o):
+        self.opacity = o
+        # self.hemi_actor.GetProperty().SetOpacity(o)
+
+    def set_color(self, c):
+        self.color = c
+        # self.hemi_actor.GetProperty().SetColor(c)
 
     def get_actor(self):
         return self.hemi_actor
-
 
 
 def extract_electrode_positions_for_single_subject(tal_path, electrode_types=['D', 'G', 'S']):
@@ -896,72 +894,110 @@ def extract_electrode_positions_for_single_subject(tal_path, electrode_types=['D
 
     electrode_type_selector = np.array(map(lambda eType: eType.lower() in electrode_types_lower, tal_structs.eType))
 
-    lh_data = tal_structs[['avgSurf','eType']]
-    rh_data = tal_structs[['avgSurf','eType']]
+    lh_data = tal_structs[['avgSurf', 'eType']]
+    rh_data = tal_structs[['avgSurf', 'eType']]
 
     lh_data = lh_data[lh_selector & electrode_type_selector]
     rh_data = rh_data[rh_selector & electrode_type_selector]
 
-    lh_data_np = np.zeros(shape = (len(lh_data),3), dtype=np.float)
-    rh_data_np = np.zeros(shape = (len(rh_data),3), dtype=np.float)
+    lh_data_np = np.zeros(shape=(len(lh_data), 3), dtype=np.float)
+    rh_data_np = np.zeros(shape=(len(rh_data), 3), dtype=np.float)
 
-    lh_data_np[:,0]=lh_data.avgSurf.x_snap
-    lh_data_np[:,1]=lh_data.avgSurf.y_snap
-    lh_data_np[:,2]=lh_data.avgSurf.z_snap
+    lh_data_np[:, 0] = lh_data.avgSurf.x_snap
+    lh_data_np[:, 1] = lh_data.avgSurf.y_snap
+    lh_data_np[:, 2] = lh_data.avgSurf.z_snap
 
-    rh_data_np[:,0]=rh_data.avgSurf.x_snap
-    rh_data_np[:,1]=rh_data.avgSurf.y_snap
-    rh_data_np[:,2]=rh_data.avgSurf.z_snap
+    rh_data_np[:, 0] = rh_data.avgSurf.x_snap
+    rh_data_np[:, 1] = rh_data.avgSurf.y_snap
+    rh_data_np[:, 2] = rh_data.avgSurf.z_snap
 
-
-
-    return lh_data_np,rh_data_np
+    return lh_data_np, rh_data_np
 
 
 class Electrodes(object):
-    def __init__(self,shape='sphere'):
-
+    def __init__(self, shape='sphere'):
 
         self.electrode_points = vtk.vtkPoints()
         self.electrode_colors = vtk.vtkUnsignedCharArray()
         self.electrode_colors.SetNumberOfComponents(3)
 
-        if shape=='sphere':
+        if shape == 'sphere':
             self.e_glyph_shape = vtk.vtkSphereSource()
             self.e_glyph_shape.SetRadius(3.0)
 
-        elif shape=='cone':
+        elif shape == 'cone':
             self.e_glyph_shape = vtk.vtkConeSource()
             self.e_glyph_shape.SetResolution(5)
             self.e_glyph_shape.SetHeight(5)
 
+        self.opacity = None
+
+        self.color = None
+
+    def get_opacity(self):
+        return self.opacity
+
+    def get_color(self):
+        return self.color
+
+    def set_opacity(self, o):
+        self.opacity = o
+
+    def set_color(self, c):
+        self.color = c
 
 
 
-    def set_electrodes_locations(self,loc_array):
+
+    def get_polydata_mapper(self):
+        self.glyphs = vtk.vtkGlyph3D()
+        self.glyphs.SetSourceConnection(self.e_glyph_shape.GetOutputPort())
+        self.glyphs.SetColorModeToColorByScalar()
+
+        self.centroidsPD = vtk.vtkPolyData()
+        self.centroidsPD.SetPoints(self.electrode_points)
+        self.centroidsPD.GetPointData().SetScalars(self.electrode_colors)
+
+        if vtk_major_version == 5:
+
+            self.glyphs.SetInput(self.centroidsPD)
+
+
+        else:
+            self.glyphs.SetInputData(self.centroidsPD)
+
+        self.glyphsMapper = vtk.vtkPolyDataMapper()
+        self.glyphsMapper.SetInputConnection(self.glyphs.GetOutputPort())
+
+        self.glyphs.ScalingOff()  # IMPORTANT
+        self.glyphs.Update()
+
+        return self.glyphsMapper
+
+
+    def set_electrodes_locations(self, loc_array):
         for loc in loc_array:
-            self.electrode_points.InsertNextPoint(loc[0],loc[1],loc[2])
+            self.electrode_points.InsertNextPoint(loc[0], loc[1], loc[2])
 
-    def set_electrodes_color(self,c=[255,0,0]):
+    def set_electrodes_color(self, c=[255, 0, 0]):
         self.electrode_colors = vtk.vtkUnsignedCharArray()
         self.electrode_colors.SetNumberOfComponents(3)
 
         for i in range(self.electrode_points.GetNumberOfPoints()):
             self.electrode_colors.InsertNextTupleValue(c)
 
-    def color_electrodes_by_scalars(self,scalar_array,lut=None):
+    def color_electrodes_by_scalars(self, scalar_array, lut=None):
 
-        s_array = np.array(scalar_array,dtype=np.float)
+        s_array = np.array(scalar_array, dtype=np.float)
 
         self.electrode_colors = vtk.vtkUnsignedCharArray()
         self.electrode_colors.SetNumberOfComponents(3)
 
         if lut is None:
-            min, max = np.min(s_array) , np.max(s_array)
-            lut = divergent_color_lut(table_size=len(s_array), table_range=[min,max])
+            min, max = np.min(s_array), np.max(s_array)
+            lut = divergent_color_lut(table_size=len(s_array), table_range=[min, max])
 
         for scalar in scalar_array:
-
             color_tuple = [0, 0, 0]
             lut.GetColor(scalar, color_tuple)
 
@@ -971,9 +1007,8 @@ class Electrodes(object):
 
 
 
+
     def get_actor(self):
-
-
 
         # cone.SetResolution(5)
         # cone.SetHeight(2)
@@ -995,17 +1030,11 @@ class Electrodes(object):
         else:
             self.glyphs.SetInputData(self.centroidsPD)
 
-
         self.glyphsMapper = vtk.vtkPolyDataMapper()
         self.glyphsMapper.SetInputConnection(self.glyphs.GetOutputPort())
 
-
         self.glyphs.ScalingOff()  # IMPORTANT
         self.glyphs.Update()
-
-
-
-
 
         self.electrodes_actor = vtk.vtkActor()
         self.electrodes_actor.SetMapper(self.glyphsMapper)
@@ -1013,12 +1042,8 @@ class Electrodes(object):
         return self.electrodes_actor
 
 
-
-
 class BrainPlot(object):
     def __init__(self):
-
-
         self.vtk_major_version = vtk.vtkVersion().GetVTKMajorVersion()
 
         import numpy as np
@@ -1038,19 +1063,16 @@ class BrainPlot(object):
         self.ren = vtk.vtkRenderer()
         self.widget.GetRenderWindow().AddRenderer(self.ren)
 
-
     # def add_hemispheres(self, hemi_list=['l','r']):
     #     for hemi in hemi_list:
     #         h = Hemisphere(hemi=hemi)
 
 
-    def add_actor(self,actor):
+    def add_actor(self, actor):
         self.ren.AddActor(actor)
 
-
     def plot(self):
-
-        self.widget.resize(1000,1000)
+        self.widget.resize(1000, 1000)
 
         # show the widget
         self.widget.raise_()
@@ -1059,7 +1081,6 @@ class BrainPlot(object):
 
         # start event processing
         self.app.exec_()
-
 
 
 # if __name__ == "__main__":
@@ -1091,9 +1112,12 @@ if __name__ == "__main__":
 
 
     tal_path = '/Users/m/data/eeg/R1111M/tal/R1111M_talLocs_database_bipol.mat'
-    depth_lh_elec_data, depth_rh_elec_data = extract_electrode_positions_for_single_subject(tal_path=tal_path, electrode_types=['D'])
-    strip_lh_elec_data, strip_rh_elec_data = extract_electrode_positions_for_single_subject(tal_path=tal_path, electrode_types=['S'])
-    grid_lh_elec_data, grid_rh_elec_data = extract_electrode_positions_for_single_subject(tal_path=tal_path, electrode_types=['G'])
+    depth_lh_elec_data, depth_rh_elec_data = extract_electrode_positions_for_single_subject(tal_path=tal_path,
+                                                                                            electrode_types=['D'])
+    strip_lh_elec_data, strip_rh_elec_data = extract_electrode_positions_for_single_subject(tal_path=tal_path,
+                                                                                            electrode_types=['S'])
+    grid_lh_elec_data, grid_rh_elec_data = extract_electrode_positions_for_single_subject(tal_path=tal_path,
+                                                                                          electrode_types=['G'])
 
     bp = BrainPlot()
 
@@ -1101,9 +1125,8 @@ if __name__ == "__main__":
     lh.set_opacity(0.1)
 
     rh = Hemisphere(hemi='r')
-    rh.set_color(c=[1,0,0])
+    rh.set_color(c=[1, 0, 0])
     rh.set_opacity(0.1)
-
 
     bp.add_actor(lh.get_actor())
     bp.add_actor(rh.get_actor())
@@ -1111,24 +1134,21 @@ if __name__ == "__main__":
     depth_elec = Electrodes(shape='cone')
     # elec.set_electrodes_locations(loc_array=[[0,0,0]])
     depth_elec.set_electrodes_locations(loc_array=depth_lh_elec_data)
-    depth_elec.set_electrodes_color(c=[0,255,0])
+    depth_elec.set_electrodes_color(c=[0, 255, 0])
     bp.add_actor(depth_elec.get_actor())
-
-
 
     strip_elec = Electrodes(shape='sphere')
     # elec.set_electrodes_locations(loc_array=[[0,0,0]])
     strip_elec.set_electrodes_locations(loc_array=strip_lh_elec_data)
-    strip_elec.set_electrodes_color(c=[255,255,0])
+    strip_elec.set_electrodes_color(c=[255, 255, 0])
     bp.add_actor(strip_elec.get_actor())
 
     grid_elec = Electrodes(shape='sphere')
     # elec.set_electrodes_locations(loc_array=[[0,0,0]])
     grid_elec.set_electrodes_locations(loc_array=grid_lh_elec_data)
 
-    grid_elec.color_electrodes_by_scalars(scalar_array=np.arange(len(grid_lh_elec_data))/10.0)
+    grid_elec.color_electrodes_by_scalars(scalar_array=np.arange(len(grid_lh_elec_data)) / 10.0)
     # grid_elec.set_electrodes_color(c=[255,0,0])
     bp.add_actor(grid_elec.get_actor())
-
 
     bp.plot()
