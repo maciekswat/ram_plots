@@ -68,6 +68,7 @@ def get_elec_data_coords_array(hemi_data):
 def get_tal_structs_row(subject,anode_tag,cathode_tag):
 
         # '/Users/m/data/eeg/R1111M/tal/R1111M_talLocs_database_bipol.mat'
+        # tal_path = join(mount_point,'data/eeg/',subject,'tal',subject+'_talLocs_database_bipol.mat')
         tal_path = join(mount_point,'data/eeg/',subject,'tal',subject+'_talLocs_database_bipol.mat')
         tal_reader = TalReader(filename=tal_path)
         tal_structs = tal_reader.read()
@@ -153,35 +154,25 @@ def construct_elec_dataframe(df):
 
 
 
-tdf = pd.read_csv('ttest_table.csv')
+# tdf = pd.read_csv('ttest_table.csv')
+#
+#
+# print tdf
+# new_tdf = construct_elec_dataframe(tdf)
+#
+# print new_tdf
+#
+# new_tdf.to_csv('ttest_table_with_location.csv')
+#
 
-# tdf['x'] = pd.Series(np.zeros(shape=(len(tdf['Subject'])),dtype=np.float))
-# tdf['y'] = pd.Series(np.zeros(shape=(len(tdf['Subject'])),dtype=np.float))
-# tdf['z'] = pd.Series(np.zeros(shape=(len(tdf['Subject'])),dtype=np.float))
-# tdf['eType'] = pd.Series(np.zeros(shape=(len(tdf['Subject'])),dtype='|S256'))
+
+tdf = pd.read_csv('ttest_table_params.csv')
+
 
 print tdf
 new_tdf = construct_elec_dataframe(tdf)
 
 print new_tdf
 
-new_tdf.to_csv('ttest_table_with_location.csv')
+new_tdf.to_csv('ttest_table_params_with_location.csv')
 
-# print tdf.Subject
-#
-# sel_tdf = tdf[tdf.p<0.05]
-#
-#
-#
-# sel_tdf = sel_tdf.sort_values(by=['Subject'], ascending=[True], inplace=False)
-# print sel_tdf
-#
-#
-#
-# lh_data_combined, rh_data_combined = construct_significant_elec_info(df=sel_tdf)
-#
-# electrode_types =['D','S','G']
-# # lh_elec_data, rh_elec_data = extract_electrode_positions(tal_path=tal_path, electrode_types=electrode_types)
-#
-# # BrainPlotExample(lh_elec_data=lh_data_combined.view(np.recarray), rh_elec_data=rh_data_combined.view(np.recarray),electrode_types=electrode_types, filename='combined_electrodes.png')
-# BrainPlotExample(lh_elec_data=lh_data_combined.view(np.recarray), rh_elec_data=rh_data_combined.view(np.recarray),electrode_types=electrode_types)

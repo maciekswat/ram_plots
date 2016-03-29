@@ -1,0 +1,23 @@
+coords_tdf_list = []
+
+print len(tdf)
+
+for subject, irow in tdf.iterrows():
+    sel_row = coords_tdf[(coords_tdf.subject==subject) & (coords_tdf.tagName==irow.stimAnodeTag)]
+
+    print sel_row
+
+    coords_tdf_list.append(sel_row.values)
+    print 'this is the list = ',list(sel_row.values)
+    break
+    if not len(sel_row):
+        print 'got empty list subject=',subject,' stimAnodeTag=',irow.stimAnodeTag
+
+
+print coords_tdf_list
+# coords_df = pd.DataFrame(coords_tdf_list,columns=['subject','tagName','x','y','z','eType'])
+#
+# print len(coords_tdf_list)
+# print coords_df
+#
+# print len(coords_tdf.drop_duplicates(cols=['subject','tagName']))
