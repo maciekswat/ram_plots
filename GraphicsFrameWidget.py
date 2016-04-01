@@ -560,13 +560,15 @@ if __name__=='__main__':
         tdf = pd.DataFrame.from_csv(ttest_table_df_filename)
         coords_tdf = pd.DataFrame.from_csv('coords_'+ttest_table_df_filename)
 
-        interesting_tdf = tdf[(tdf.p<=0.01) & (tdf.t>0) ]
+        interesting_tdf = tdf[(tdf.p<=0.01) & (tdf.t>0) & (tdf.N>5)]
+        # interesting_tdf = tdf[(tdf.p <= 0.01) & (tdf.t > 0) ]
 
 
         interesting_coords_tdf =  coords_tdf[ coords_tdf.subject.isin(interesting_tdf.index)
                           &
                           (coords_tdf.tagName.isin(interesting_tdf.stimAnodeTag)
                            | coords_tdf.tagName.isin(interesting_tdf.stimCathodeTag))
+                          # & (coords_tdf.eType=='D')
         ]
 
 
@@ -587,6 +589,7 @@ if __name__=='__main__':
                           &
                           (coords_tdf.tagName.isin(ni_tdf.stimAnodeTag)
                            | coords_tdf.tagName.isin(ni_tdf.stimCathodeTag))
+                            # & (coords_tdf.eType == 'D')
         ]
 
 
@@ -596,7 +599,7 @@ if __name__=='__main__':
 
         r1111_coords_tdf =  coords_tdf[ coords_tdf.subject.isin(['R1111M'])
                           &
-                          (coords_tdf.tagName.isin(['LPOG10','LPOG2'])
+                          (coords_tdf.tagName.isin(['LPOG10','LPOG2','LPOG1','LPOG9'])
                            )
         ]
 
@@ -625,11 +628,11 @@ if __name__=='__main__':
 
 
         lh = Hemisphere(hemi='l')
-        lh.set_opacity(1.0)
+        lh.set_opacity(0.2)
 
         rh = Hemisphere(hemi='r')
         # rh.set_color(c=[1,0,0])
-        rh.set_opacity(1.0)
+        rh.set_opacity(0.2)
 
         w.add_display_object('lh',lh)
         w.add_display_object('rh',rh)
@@ -688,13 +691,13 @@ if __name__=='__main__':
         # w.add_actor('depth_elec',depth_elec.get_actor())
         w.add_display_object('i_elec',i_elec)
 
-
-        r1111_elec = Electrodes(shape='sphere')
-        # elec.set_electrodes_locations(loc_array=[[0,0,0]])
-        r1111_elec.set_electrodes_locations(loc_array=tdf_r1111.values)
-        r1111_elec.set_electrodes_color(c=[0,0,255])
-        # w.add_actor('depth_elec',depth_elec.get_actor())
-        w.add_display_object('r1111_elec',r1111_elec)
+        #
+        # r1111_elec = Electrodes(shape='sphere')
+        # # elec.set_electrodes_locations(loc_array=[[0,0,0]])
+        # r1111_elec.set_electrodes_locations(loc_array=tdf_r1111.values)
+        # r1111_elec.set_electrodes_color(c=[0,0,255])
+        # # w.add_actor('depth_elec',depth_elec.get_actor())
+        # w.add_display_object('r1111_elec',r1111_elec)
 
 
 
