@@ -163,6 +163,71 @@ def construct_elec_dataframe(df):
 
 
 
+def extend_elec_dataframe(df):
+
+
+    tal_structs = None
+    subject = ''
+
+    lh_selector = None
+    rh_selector = None
+
+    lh_data_combined = None
+    rh_data_combined = None
+
+
+    x = np.zeros(shape=(len(tdf['Subject'])),dtype=np.float)
+    y = np.zeros(shape=(len(tdf['Subject'])),dtype=np.float)
+    z = np.zeros(shape=(len(tdf['Subject'])),dtype=np.float)
+    eType = np.zeros(shape=(len(tdf['Subject'])),dtype='|S256')
+
+
+    monopol_elec_data = []
+
+    for count, (index, row) in enumerate(df.iterrows()):
+        # print count, index, row
+
+        if subject != row['Subject']:
+
+            subject = row['Subject']
+            print subject
+
+
+        sel = get_tal_structs_row(subject=subject,anode_tag=row['stimAnodeTag'],cathode_tag=row['stimCathodeTag'])
+
+        for s in sel:
+            monopol_elec_data.append([subject,s.tagName,s.avgSurf.x,s.avgSurf.y,s.avgSurf.z,s.eType])
+
+        if len(sel):
+            x[count] = sel[0].avgSurf.x
+            y[count] = sel[0].avgSurf.y
+            z[count] = sel[0].avgSurf.z
+            eType[count] = sel[0].eType
+        else:
+            x[count] = np.nan
+            y[count] = np.nan
+            z[count] = np.nan
+            eType[count] = ''
+
+
+    df['x'] = x
+    df['y'] = y
+    df['z'] = z
+    df['eType'] = eType
+
+    return df
+# # EXTENSION FO DATAFRAME
+# ttest_table_df_filename = 'ttest_table_params.csv'
+#
+# tdf = pd.read_csv(ttest_table_df_filename)
+#
+# elec_coord_tdf = extend_elec_dataframe(tdf)
+#
+# print elec_coord_tdf
+#
+# # EXTENSION FO DATAFRAME
+
+ORIGINAL CODE
 ttest_table_df_filename = 'ttest_table_params.csv'
 
 tdf = pd.read_csv(ttest_table_df_filename)
@@ -172,7 +237,7 @@ elec_coord_tdf = construct_elec_dataframe(tdf)
 elec_coord_tdf.to_csv('coords_'+ttest_table_df_filename)
 
 
-# print new_tdf
-#
-# new_tdf.to_csv('ttest_table_params_with_location.csv')
+print new_tdf
+
+new_tdf.to_csv('ttest_table_params_with_location.csv')
 

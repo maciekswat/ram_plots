@@ -668,13 +668,63 @@ if __name__=='__main__':
 
         # depth_lh_elec_data, depth_rh_elec_data
 
+        # verts_np = get_brain_verts_as_numpy_array()
+        # print 'Found ',len(tdf_pos_filt.values),' electrodes'
+        #
+        # c_close = 0
+        # c_far = 0
+        #
+        # surface_pulled_electrodes = []
+        # original_pos_electrodes = []
+        # for loc in tdf_pos_filt.values:
+        #     dist_vec_array = verts_np - np.array([loc[0], loc[1], loc[2]],dtype=np.float)
+        #     dist_array = (np.linalg.norm(dist_vec_array, axis=1))
+        #     min_dist = np.min(dist_array)
+        #
+        #     if min_dist < 10.0:
+        #         print 'loc=',loc
+        #         print min_dist
+        #         min_idx = np.argmin(dist_array)
+        #         print 'min_idx=',min_idx,' dist = ',dist_array[min_idx]
+        #         print ''
+        #         surface_pulled_electrodes.append(verts_np[min_idx, :])
+        #         c_close+=1
+        #
+        #
+        #
+        #     else:
+        #         original_pos_electrodes.append(loc)
+        #         c_far+=1
+        #
+        #     # break
+        #     # self.electrode_points.InsertNextPoint(loc[0], loc[1], loc[2])
+        # print c_close
+        # print c_far
+        # sys.exit()
+
+
+        # pd.GetNumberOfPoints()
+        #
+        # cl = vtk.vtkCellLocator()
+        # cl.SetDataSet(pd)
+        # cl.BuildLocator()
+        #
+        # tp = [2., 0., 0., ]
+        # cp = [0., 0., 0.]
+        #
+        # cdist = 0.0
+        #
+        # cellid = 0
+        # subid = 0
+        #
+        # cl.FindClosestPoint(tp, cp, cellid, subid, cdist)
 
         lh = Hemisphere(hemi='l')
-        lh.set_opacity(0.3)
+        lh.set_opacity(1.3)
 
         rh = Hemisphere(hemi='r')
         # rh.set_color(c=[1,0,0])
-        rh.set_opacity(0.3)
+        rh.set_opacity(1.3)
 
         w.add_display_object('lh',lh)
         w.add_display_object('rh',rh)
@@ -717,39 +767,61 @@ if __name__=='__main__':
 
 
         ni_elec = Electrodes(shape='sphere')
-        # elec.set_electrodes_locations(loc_array=[[0,0,0]])
-        ni_elec.set_electrodes_locations(loc_array=tdf_ni.values)
+
+        ni_elec_locs = tdf_ni.values
+        pulled_els, orig_els = pull_electrodes_to_surface(ni_elec_locs, max_distance=10.0)
+        ni_elec_locs = pulled_els + orig_els
+
+        ni_elec.set_electrodes_locations(loc_array=ni_elec_locs)
+
         ni_elec.set_electrodes_color(c=non_significant_color)
-        # w.add_actor('depth_elec',depth_elec.get_actor())
+
         w.add_display_object('ni_elec',ni_elec)
 
 
-        # significant positive elec
-        i_elec = Electrodes(shape='sphere')
-        # elec.set_electrodes_locations(loc_array=[[0,0,0]])
-        i_elec.set_electrodes_locations(loc_array=tdf_pos_filt.values)
-        i_elec.set_electrodes_color(c=pos_significant_color)
-        # w.add_actor('depth_elec',depth_elec.get_actor())
-        w.add_display_object('i_elec', i_elec)
+        # # significant positive elec
+        # pos_elec_locs = tdf_pos_filt.values
+        # pulled_els, orig_els = pull_electrodes_to_surface(pos_elec_locs, max_distance=10.0)
+        # pos_elec_locs = pulled_els+orig_els
+        #
+        # i_elec = Electrodes(shape='sphere')
+        # i_elec.set_electrodes_locations(loc_array=pos_elec_locs)
+        # i_elec.set_electrodes_color(c=pos_significant_color)
+        # w.add_display_object('i_elec', i_elec)
 
 
+        #
         # significant negative elec
 
+        neg_elec_locs = tdf_neg_filt.values
+        pulled_els, orig_els = pull_electrodes_to_surface(neg_elec_locs, max_distance=10.0)
+        neg_elec_locs = pulled_els + orig_els
+
         neg_i_elec = Electrodes(shape='sphere')
-        # elec.set_electrodes_locations(loc_array=[[0,0,0]])
-        neg_i_elec.set_electrodes_locations(loc_array=tdf_neg_filt.values)
+        neg_i_elec.set_electrodes_locations(loc_array=neg_elec_locs)
         neg_i_elec.set_electrodes_color(c=neg_significant_color)
-        # w.add_actor('depth_elec',depth_elec.get_actor())
         w.add_display_object('neg_i_elec', neg_i_elec)
 
-        # flipping elec
+        # # flipping elec
+        #
+        # flip_i_elec = Electrodes(shape='sphere')
+        # # elec.set_electrodes_locations(loc_array=[[0,0,0]])
+        # flip_i_elec.set_electrodes_locations(loc_array=tdf_flip.values)
+        # flip_i_elec.set_electrodes_color(c=flipping_color)
+        # # w.add_actor('depth_elec',depth_elec.get_actor())
+        # w.add_display_object('flip_i_elec', flip_i_elec)
 
-        flip_i_elec = Electrodes(shape='sphere')
-        # elec.set_electrodes_locations(loc_array=[[0,0,0]])
-        flip_i_elec.set_electrodes_locations(loc_array=tdf_flip.values)
-        flip_i_elec.set_electrodes_color(c=flipping_color)
-        # w.add_actor('depth_elec',depth_elec.get_actor())
-        w.add_display_object('flip_i_elec', flip_i_elec)
+
+
+
+
+
+
+
+
+
+
+
 
 
         #

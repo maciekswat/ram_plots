@@ -663,6 +663,68 @@ def get_electrode_glyphs(e_pts, e_colors):
 
     return glyphs
 
+def get_brain_verts_as_numpy_array():
+    l = Hemisphere(hemi='l')
+    r = Hemisphere(hemi='r')
+    print l.pd
+    l_num_verts = l.pd.GetNumberOfPoints()
+    r_num_verts = r.pd.GetNumberOfPoints()
+
+    verts_np = np.zeros(shape=(l_num_verts + r_num_verts, 3), dtype=np.float)
+
+    for idx in xrange(l_num_verts):
+        pt = l.pd.GetPoint(idx)
+        verts_np[idx, 0] = pt[0]
+        verts_np[idx, 1] = pt[1]
+        verts_np[idx, 2] = pt[2]
+
+    for idx in xrange(r_num_verts):
+        pt = r.pd.GetPoint(idx)
+        verts_np[l_num_verts + idx, 0] = pt[0]
+        verts_np[l_num_verts + idx, 1] = pt[1]
+        verts_np[l_num_verts + idx, 2] = pt[2]
+
+    return verts_np
+
+def pull_electrodes_to_surface(elec_pos_array, max_distance=1.0):
+
+    verts_np = get_brain_verts_as_numpy_array()
+    print 'Found ', len(elec_pos_array), ' electrodes'
+
+    c_close = 0
+    c_far = 0
+
+    surface_pulled_electrodes = []
+    original_pos_electrodes = []
+
+    for loc in elec_pos_array:
+        dist_vec_array = verts_np - np.array([loc[0], loc[1], loc[2]], dtype=np.float)
+        dist_array = (np.linalg.norm(dist_vec_array, axis=1))
+        min_dist = np.min(dist_array)
+
+        if min_dist < max_distance:
+            print 'loc=', loc
+            print min_dist
+            min_idx = np.argmin(dist_array)
+            print 'min_idx=', min_idx, ' dist = ', dist_array[min_idx]
+            print ''
+
+            surface_pulled_electrodes.append(verts_np[min_idx, :])
+            # surface_pulled_electrodes.append(loc)
+            c_close += 1
+
+
+
+        else:
+            original_pos_electrodes.append(loc)
+            c_far += 1
+
+            # break
+            # self.electrode_points.InsertNextPoint(loc[0], loc[1], loc[2])
+    print c_close
+    print c_far
+    return surface_pulled_electrodes,original_pos_electrodes
+
 
 # def take_screenshot(ren,filename):
 #
