@@ -663,6 +663,7 @@ def get_electrode_glyphs(e_pts, e_colors):
 
     return glyphs
 
+
 def get_brain_verts_as_numpy_array():
     l = Hemisphere(hemi='l')
     r = Hemisphere(hemi='r')
@@ -686,8 +687,8 @@ def get_brain_verts_as_numpy_array():
 
     return verts_np
 
-def pull_electrodes_to_surface(elec_pos_array, max_distance=1.0):
 
+def pull_electrodes_to_surface(elec_pos_array, max_distance=1.0):
     verts_np = get_brain_verts_as_numpy_array()
     print 'Found ', len(elec_pos_array), ' electrodes'
 
@@ -723,7 +724,7 @@ def pull_electrodes_to_surface(elec_pos_array, max_distance=1.0):
             # self.electrode_points.InsertNextPoint(loc[0], loc[1], loc[2])
     print c_close
     print c_far
-    return surface_pulled_electrodes,original_pos_electrodes
+    return surface_pulled_electrodes, original_pos_electrodes
 
 
 # def take_screenshot(ren,filename):
@@ -880,6 +881,56 @@ def BrainPlotExample(lh_elec_data=None, rh_elec_data=None, electrode_types=['D',
     app.exec_()
 
 
+class AxialSlice(object):
+    def __init__(self, fname=''):
+        self.fname = fname
+        self.axial_mapper = None
+        self.axial_actor = None
+        self.pd = None
+
+    def get_polydata_mapper(self):
+        reader = vtk.vtkPolyDataReader()
+        reader.SetFileName(self.fname)
+
+        lut = vtk.vtkLookupTable()
+        lut.SetNumberOfTableValues(256)
+        for i in xrange(256):
+            lut.SetTableValue(i, i, i, i, 1)
+        lut.Build()
+
+        self.axial_mapper = vtk.vtkPolyDataMapper()
+        self.axial_mapper.SetInputConnection(reader.GetOutputPort())
+        self.axial_mapper.SetScalarRange(0, 255)
+        self.axial_mapper.SetLookupTable(lut)
+
+
+        return self.axial_mapper
+
+    def get_bounds(self):
+        pass
+
+    def get_min_max(self, axis='x'):
+        pass
+
+    def get_opacity(self):
+        pass
+
+    def get_color(self):
+        pass
+
+    def set_opacity(self, o):
+        pass
+
+    def set_color(self, c):
+        pass
+
+    def get_actor(self):
+        self.axial_actor = vtk.vtkActor()
+        self.axial_actor.SetMapper(self.get_polydata_mapper())
+
+        return self.axial_actor
+
+
 class Hemisphere(object):
     def __init__(self, hemi='l'):
 
@@ -945,7 +996,6 @@ class Hemisphere(object):
 
 
 def extract_electrode_positions_for_single_subject(tal_structs, electrode_types=['D', 'G', 'S']):
-
     lh_selector = np.array(map(lambda loc: loc.upper().startswith('L'), tal_structs.tagName))
     rh_selector = np.array(map(lambda loc: loc.upper().startswith('R'), tal_structs.tagName))
 
@@ -1006,9 +1056,6 @@ class Electrodes(object):
     def set_color(self, c):
         self.color = c
 
-
-
-
     def get_polydata_mapper(self):
         self.glyphs = vtk.vtkGlyph3D()
         self.glyphs.SetSourceConnection(self.e_glyph_shape.GetOutputPort())
@@ -1033,7 +1080,6 @@ class Electrodes(object):
         self.glyphs.Update()
 
         return self.glyphsMapper
-
 
     def set_electrodes_locations(self, loc_array):
 
@@ -1065,9 +1111,6 @@ class Electrodes(object):
             color_tuple = map(lambda x: int(round(x * 255)), color_tuple)
 
             self.electrode_colors.InsertNextTupleValue(color_tuple)
-
-
-
 
     def get_actor(self):
 

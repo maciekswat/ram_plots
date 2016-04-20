@@ -815,8 +815,7 @@ if __name__=='__main__':
 
 
 
-        axial_slice = AxialSlice(fname='/Users/m/RAM_PLOT_GIT/datasets/axial-mni-7.0.vtk')
-        w.add_display_object('axial_slice',)
+
 
 
 
