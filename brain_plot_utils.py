@@ -521,6 +521,15 @@ class QVTKRenderWindowInteractor(QtGui.QWidget):  # Mac
     def Render(self):
         self.update()
 
+from numpy import cross, eye, dot
+from scipy.linalg import expm3, norm
+
+def RotMat(axis, theta):
+    return expm3(cross(eye(3), axis/norm(axis)*theta))
+
+# v, axis, theta = [3,5,0], [4,4,1], 1.2
+# R0 = RotMat(axis, theta)
+# print(dot(R0,v))
 
 def extract_electrode_positions(tal_path, electrode_types=['D', 'G', 'S']):
     from ptsa.data.readers import TalReader

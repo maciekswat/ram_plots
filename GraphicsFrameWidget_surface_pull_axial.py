@@ -1,6 +1,8 @@
 import sys
 from BrainGraphicsFrameWidget import BrainGraphicsFrameWidget
+from brain_plot_utils import *
 
+import pandas as pd
 if __name__=='__main__':
         sys.path.append('/Users/m/PTSA_NEW_GIT')
 
