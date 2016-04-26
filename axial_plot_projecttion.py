@@ -145,7 +145,7 @@ if __name__=='__main__':
         c=np.array([4.,2.,-6.])
 
         el=[18, 32, 21]
-        pr_el = project_electrode_onto_plane([18, 32, 21],[a,b,c])
+        pr_el,pr_dist = project_electrode_onto_plane([18, 32, 21],[a,b,c])
 
         pr_elecs = np.vstack((el,pr_el))
         # pr_elecs = np.vstack((pr_el,pr_el))

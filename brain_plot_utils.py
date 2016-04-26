@@ -707,7 +707,7 @@ def project_electrode_onto_plane(elec_pos, plane_pts):
     n = cross(ab, ac)
     n = n / norm(n)
 
-    # n,a,r,p,d are all vectors in 3D space
+    # n,a,r,p,d, pr are all vectors in 3D space
     a = plane_pts[0]
     p = elec_pos
     r = p - a
@@ -717,7 +717,7 @@ def project_electrode_onto_plane(elec_pos, plane_pts):
 
     print 'distance from the plane=',norm(d)
 
-    return pr
+    return pr, norm(d)
 
 
 def pull_electrodes_to_surface(elec_pos_array, max_distance=1.0):
