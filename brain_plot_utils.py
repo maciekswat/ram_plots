@@ -521,11 +521,14 @@ class QVTKRenderWindowInteractor(QtGui.QWidget):  # Mac
     def Render(self):
         self.update()
 
+
 from numpy import cross, eye, dot
 from scipy.linalg import expm3, norm
 
+
 def RotMat(axis, theta):
-    return expm3(cross(eye(3), axis/norm(axis)*theta))
+    return expm3(cross(eye(3), axis / norm(axis) * theta))
+
 
 # v, axis, theta = [3,5,0], [4,4,1], 1.2
 # R0 = RotMat(axis, theta)
@@ -695,6 +698,26 @@ def get_brain_verts_as_numpy_array():
         verts_np[l_num_verts + idx, 2] = pt[2]
 
     return verts_np
+
+
+def project_electrode_onto_plane(elec_pos, plane_pts):
+    ab = plane_pts[1] - plane_pts[0]
+    ac = plane_pts[2] - plane_pts[0]
+
+    n = cross(ab, ac)
+    n = n / norm(n)
+
+    # n,a,r,p,d are all vectors in 3D space
+    a = plane_pts[0]
+    p = elec_pos
+    r = p - a
+    d = dot(n,r)*n
+
+    pr = a+(r-d)
+
+    print 'distance from the plane=',norm(d)
+
+    return pr
 
 
 def pull_electrodes_to_surface(elec_pos_array, max_distance=1.0):
@@ -911,7 +934,6 @@ class AxialSlice(object):
         self.axial_mapper.SetInputConnection(reader.GetOutputPort())
         self.axial_mapper.SetScalarRange(0, 255)
         self.axial_mapper.SetLookupTable(lut)
-
 
         return self.axial_mapper
 
