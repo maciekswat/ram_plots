@@ -715,7 +715,7 @@ def project_electrode_onto_plane(elec_pos, plane_pts):
 
     pr = a+(r-d)
 
-    print 'distance from the plane=',norm(d)
+    # print 'distance from the plane=',norm(d)
 
     return pr, norm(d)
 
@@ -956,9 +956,9 @@ class AxialSlice(object):
 
         if points_array_size>=3:
             select_plane_points = np.array([points_array.GetTuple3(0),points_array.GetTuple3(points_array_size/2),points_array.GetTuple3(points_array_size-1)],dtype=np.float)
-            print points_array.GetTuple3(0)
-            print points_array.GetTuple3(points_array_size/2)
-            print points_array.GetTuple3(points_array_size-1)
+            # print points_array.GetTuple3(0)
+            # print points_array.GetTuple3(points_array_size/2)
+            # print points_array.GetTuple3(points_array_size-1)
 
             return select_plane_points
 
