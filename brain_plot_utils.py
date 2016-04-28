@@ -727,6 +727,30 @@ def pull_electrodes_to_surface(elec_pos_array, max_distance=1.0):
     return surface_pulled_electrodes, original_pos_electrodes
 
 
+def pull_electrodes_to_plane(elec_pos_array,plane_points,max_distance=1.0):
+
+    pass
+
+def pull_electrodes_to_z_slice(elec_pos_array, z=0.0, max_distance=1.0):
+    print 'Found ', len(elec_pos_array), ' electrodes'
+
+    c_close = 0
+    c_far = 0
+
+    pulled_electrodes_mask = abs(elec_pos_array[:, 2] - z) < max_distance
+
+    pulled_electrodes = elec_pos_array[pulled_electrodes_mask]
+
+    pulled_electrodes[:, 2] = z  # resetting z position of the pulled electrodes
+
+    original_pos_electrodes = elec_pos_array[~pulled_electrodes_mask]
+
+    print 'pulled electrodes #=', len(pulled_electrodes)
+    print ' electrodes with original positions#=',len(original_pos_electrodes)
+
+    return pulled_electrodes, original_pos_electrodes
+
+
 # def take_screenshot(ren,filename):
 #
 #     renderLarge = vtk.vtkRenderLargeImage()
@@ -888,9 +912,31 @@ class AxialSlice(object):
         self.axial_actor = None
         self.pd = None
 
+    def get_plane_points(self):
+        reader = vtk.vtkPolyDataReader()
+        reader.SetFileName(self.fname)
+        reader.Update()
+
+        plane_points = reader.GetOutput()
+
+        points_array = plane_points.GetPoints().GetData()
+        points_array_size = points_array.GetNumberOfTuples()
+
+        if points_array_size>=3:
+            select_plane_points = np.array([points_array.GetTuple3(0),points_array.GetTuple3(points_array_size/2),points_array.GetTuple3(points_array_size-1)],dtype=np.float)
+            print points_array.GetTuple3(0)
+            print points_array.GetTuple3(points_array_size/2)
+            print points_array.GetTuple3(points_array_size-1)
+
+            return select_plane_points
+
+        return None
+
     def get_polydata_mapper(self):
         reader = vtk.vtkPolyDataReader()
         reader.SetFileName(self.fname)
+
+
 
         lut = vtk.vtkLookupTable()
         lut.SetNumberOfTableValues(256)
@@ -902,7 +948,6 @@ class AxialSlice(object):
         self.axial_mapper.SetInputConnection(reader.GetOutputPort())
         self.axial_mapper.SetScalarRange(0, 255)
         self.axial_mapper.SetLookupTable(lut)
-
 
         return self.axial_mapper
 
