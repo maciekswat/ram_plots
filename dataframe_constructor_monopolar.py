@@ -69,8 +69,10 @@ def get_tal_structs_row(subject,anode_tag,cathode_tag):
 
         # '/Users/m/data/eeg/R1111M/tal/R1111M_talLocs_database_bipol.mat'
         # tal_path = join(mount_point,'data/eeg/',subject,'tal',subject+'_talLocs_database_bipol.mat')
-        tal_path = join(mount_point,'data/eeg/',subject,'tal',subject+'_talLocs_database_monopol.mat')
+        tal_path = str(join(mount_point,'data/eeg/',subject,'tal',subject+'_talLocs_database_monopol.mat'))
+
         tal_reader = TalReader(filename=tal_path,struct_name='talStruct')
+
         tal_structs = tal_reader.read()
 
         # sel = tal_structs[np.where(tal_structs.tagName == anode_tag+'-'+cathode_tag)]
@@ -80,7 +82,7 @@ def get_tal_structs_row(subject,anode_tag,cathode_tag):
 
         if not len(sel):
 
-            tal_path = join(mount_point,'data/eeg/',subject,'tal',subject+'_talLocs_database_stimOnly.mat')
+            tal_path = str(join(mount_point,'data/eeg/',subject,'tal',subject+'_talLocs_database_stimOnly.mat'))
             tal_reader = TalStimOnlyReader(filename=tal_path)
             tal_structs = tal_reader.read()
 
@@ -227,17 +229,33 @@ def extend_elec_dataframe(df):
 #
 # # EXTENSION FO DATAFRAME
 
-ORIGINAL CODE
-ttest_table_df_filename = 'ttest_table_params.csv'
+# # ORIGINAL CODE
+# ttest_table_df_filename = 'ttest_table_params.csv'
+#
+# tdf = pd.read_csv(ttest_table_df_filename)
+#
+# elec_coord_tdf = construct_elec_dataframe(tdf)
+#
+# elec_coord_tdf.to_csv('coords_'+ttest_table_df_filename)
+#
+#
+# print new_tdf
+#
+# new_tdf.to_csv('ttest_table_params_with_location.csv')
 
-tdf = pd.read_csv(ttest_table_df_filename)
+
+
+ttest_table_df_filename = 'ps_aggregator_significance_table'
+
+tdf = pd.read_excel(ttest_table_df_filename+'.xlsx')
+print tdf
 
 elec_coord_tdf = construct_elec_dataframe(tdf)
 
-elec_coord_tdf.to_csv('coords_'+ttest_table_df_filename)
+elec_coord_tdf.to_csv('coords_'+ttest_table_df_filename+'.csv')
 
 
-print new_tdf
+# print new_tdf
 
-new_tdf.to_csv('ttest_table_params_with_location.csv')
+# new_tdf.to_csv('ttest_table_params_with_location_latest.csv')
 
