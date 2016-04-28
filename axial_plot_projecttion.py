@@ -128,16 +128,17 @@ if __name__=='__main__':
 
 
         # axial_slice = AxialSlice(fname='/Users/m/RAM_PLOTS_GIT/datasets/axial-mni-7.0.vtk')
-        axial_slice = AxialSlice(fname='/Users/m/RAM_PLOTS_GIT/datasets/axial-tal-7.0.vtk')
+        axial_slice = AxialSlice(fname='/Users/m/RAM_PLOTS_GIT/datasets/axial-tal-10.0.vtk')
         w.add_display_object('axial_slice',axial_slice)
 
         plane_points = axial_slice.get_plane_points()
+        max_distance=15.0
 
 
         pr_ni_list = []
         for el in tdf_ni.values:
             pr_el,pr_dist = project_electrode_onto_plane(el,plane_points)
-            if pr_dist<=10.0:
+            if pr_dist<=max_distance:
                 pr_ni_list.append(pr_el)
 
         pr_elec_ni_obj = Electrodes(shape='sphere')
@@ -149,7 +150,7 @@ if __name__=='__main__':
         pr_neg_list = []
         for el in tdf_neg.values:
             pr_el,pr_dist = project_electrode_onto_plane(el,plane_points)
-            if pr_dist<=10.0:
+            if pr_dist<=max_distance:
                 pr_neg_list.append(pr_el)
 
         pr_elec_neg_obj = Electrodes(shape='sphere')
@@ -162,7 +163,7 @@ if __name__=='__main__':
         pr_pos_list = []
         for el in tdf_pos.values:
             pr_el,pr_dist = project_electrode_onto_plane(el,plane_points)
-            if pr_dist<=10.0:
+            if pr_dist<=max_distance:
                 pr_pos_list.append(pr_el)
 
         pr_elec_pos_obj = Electrodes(shape='sphere')
