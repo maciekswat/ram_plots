@@ -107,10 +107,21 @@ if __name__=='__main__':
 
         tdf_r1111 = r1111_coords_tdf[['x','y','z']]
 
+
+        # axial_slice = AxialSlice(fname='/Users/m/RAM_PLOTS_GIT/datasets/axial-mni-7.0.vtk')
+        axial_slice = AxialSlice(fname='/Users/m/RAM_PLOTS_GIT/datasets/axial-tal-17.0.vtk')
+        w.add_display_object('axial_slice',axial_slice)
+
+        plane_points = axial_slice.get_plane_points()
+
+
         # snapping electrodes to the surface
         neg_elec_locs = tdf_neg_filt.values
-        pulled_els, orig_els = pull_electrodes_to_surface(neg_elec_locs, max_distance=10.0)
-        neg_elec_locs = pulled_els + orig_els
+        # pulled_els, orig_els = pull_electrodes_to_surface(neg_elec_locs, max_distance=10.0)
+        pulled_els, orig_els = pull_electrodes_to_z_slice(neg_elec_locs, z=-17.0, max_distance=10.0)
+
+        # neg_elec_locs = pulled_els + orig_els
+        neg_elec_locs = pulled_els
 
 
         neg_i_elec = Electrodes(shape='sphere')
@@ -120,9 +131,6 @@ if __name__=='__main__':
 
 
 
-        # axial_slice = AxialSlice(fname='/Users/m/RAM_PLOTS_GIT/datasets/axial-mni-7.0.vtk')
-        axial_slice = AxialSlice(fname='/Users/m/RAM_PLOTS_GIT/datasets/axial-tal-7.0.vtk')
-        w.add_display_object('axial_slice',axial_slice)
 
 
         w.display(cut_plane_on=False)
