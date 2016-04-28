@@ -1,12 +1,11 @@
 import sys
 from BrainGraphicsFrameWidget import BrainGraphicsFrameWidget
+import pandas as pd
 from brain_plot_utils import *
 
-import pandas as pd
 if __name__=='__main__':
         sys.path.append('/Users/m/PTSA_NEW_GIT')
 
-        # app = QtGui.QApplication(['QVTKRenderWindowInteractor'])
 
         w = BrainGraphicsFrameWidget()
         w.resize(1000,1000)
@@ -108,33 +107,53 @@ if __name__=='__main__':
 
         tdf_r1111 = r1111_coords_tdf[['x','y','z']]
 
+        # snapping electrodes to the surface
+        neg_elec_locs = tdf_neg_filt.values
+        pulled_els, orig_els = pull_electrodes_to_surface(neg_elec_locs, max_distance=10.0)
+        neg_elec_locs = pulled_els + orig_els
 
+        # artificial plane pts
 
+        art_elecs = np.array([0.,0.,0.])
+        for i in range(-70,70,10):
+            for j in range(-70,70,10):
+                e = np.array([i*1.0,j*1.,-i-j*1.])
+                art_elecs = np.vstack((art_elecs,e))
 
-        lh = Hemisphere(hemi='l')
-        lh.set_opacity(1.3)
-
-        rh = Hemisphere(hemi='r')
-        # rh.set_color(c=[1,0,0])
-        rh.set_opacity(1.3)
-        #
-        # w.add_display_object('lh',lh)
-        # w.add_display_object('rh',rh)
-
-
-        # w.add_actor('lh',lh.get_actor())
-        # w.add_actor('rh',rh.get_actor())
-        #
-        w.add_bounds(lh.get_bounds())
-        w.add_bounds(rh.get_bounds())
-
+        art_elec_obj = Electrodes(shape='sphere')
+        art_elec_obj.set_electrodes_locations(loc_array=art_elecs)
+        art_elec_obj.set_electrodes_color(c=neg_significant_color)
+        w.add_display_object('art_elec_obj', art_elec_obj)
 
 
 
 
-        axial_slice = AxialSlice(fname='/Users/m/RAM_PLOTS_GIT/datasets/axial-mni-7.0.vtk')
-        w.add_display_object('axial_slice',axial_slice)
 
+        # neg_i_elec = Electrodes(shape='sphere')
+        # neg_i_elec.set_electrodes_locations(loc_array=neg_elec_locs)
+        # neg_i_elec.set_electrodes_color(c=neg_significant_color)
+        # w.add_display_object('neg_i_elec', neg_i_elec)
+
+
+
+        # # axial_slice = AxialSlice(fname='/Users/m/RAM_PLOTS_GIT/datasets/axial-mni-7.0.vtk')
+        # axial_slice = AxialSlice(fname='/Users/m/RAM_PLOTS_GIT/datasets/axial-tal-7.0.vtk')
+        # w.add_display_object('axial_slice',axial_slice)
+
+        a=np.array([0.,0.,0.])
+        b=np.array([1.,1.,-2.])
+        c=np.array([4.,2.,-6.])
+
+        el=[18, 32, 21]
+        pr_el,pr_dist = project_electrode_onto_plane([18, 32, 21],[a,b,c])
+
+        pr_elecs = np.vstack((el,pr_el))
+        # pr_elecs = np.vstack((pr_el,pr_el))
+
+        pr_elec_obj = Electrodes(shape='sphere')
+        pr_elec_obj.set_electrodes_locations(loc_array=pr_elecs)
+        pr_elec_obj.set_electrodes_color(c=pos_significant_color)
+        w.add_display_object('pr_elec_obj', pr_elec_obj)
 
 
 
