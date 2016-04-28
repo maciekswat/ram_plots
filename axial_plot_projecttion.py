@@ -20,12 +20,21 @@ if __name__=='__main__':
 
         ttest_table_df_filename = 'ttest_table_params.csv'
 
+        # ttest_table_df_filename = 'ps_aggregator_significance_table_04_28.csv'
+
+
         tdf = pd.DataFrame.from_csv(ttest_table_df_filename)
         coords_tdf = pd.DataFrame.from_csv('coords_'+ttest_table_df_filename)
+
+
+
 
         # significant POS
         interesting_tdf = tdf[(tdf.p<=0.01) & (tdf.t>0) & (tdf.N>5)]
         # interesting_tdf = tdf[(tdf.p <= 0.01) & (tdf.t > 0) ]
+        print interesting_tdf[['stimAnodeTag','stimCathodeTag','p','t']]
+        #print interesting_tdf.index
+        # sys.exit()
 
 
         interesting_coords_tdf =  coords_tdf[ coords_tdf.subject.isin(interesting_tdf.index)
@@ -35,6 +44,9 @@ if __name__=='__main__':
                           & (coords_tdf.eType=='D')
         ]
 
+        print interesting_coords_tdf
+
+        sys.exit()
 
         # interesting_tdf = tdf[(tdf.p<0.01) & (tdf.t>0) ][['t','x','y','z','eType']]
 
@@ -127,6 +139,7 @@ if __name__=='__main__':
 
 
 
+
         # axial_slice = AxialSlice(fname='/Users/m/RAM_PLOTS_GIT/datasets/axial-mni-7.0.vtk')
         axial_slice = AxialSlice(fname='/Users/m/RAM_PLOTS_GIT/datasets/axial-tal-10.0.vtk')
         w.add_display_object('axial_slice',axial_slice)
@@ -135,37 +148,40 @@ if __name__=='__main__':
         max_distance=15.0
 
 
-        pr_ni_list = []
-        for el in tdf_ni.values:
-            pr_el,pr_dist = project_electrode_onto_plane(el,plane_points)
-            if pr_dist<=max_distance:
-                pr_ni_list.append(pr_el)
+        # pr_ni_list = []
+        # for el in tdf_ni.values:
+        #     pr_el,pr_dist = project_electrode_onto_plane(el,plane_points)
+        #     if pr_dist<=max_distance:
+        #         pr_ni_list.append(pr_el)
+        #
+        # pr_elec_ni_obj = Electrodes(shape='sphere')
+        # pr_elec_ni_obj.set_electrodes_locations(loc_array=np.array(pr_ni_list))
+        # pr_elec_ni_obj.set_electrodes_color(c=non_significant_color)
+        # w.add_display_object('pr_elec_ni_obj', pr_elec_ni_obj)
+        #
+        #
+        # pr_neg_list = []
+        # for el in tdf_neg.values:
+        #     pr_el,pr_dist = project_electrode_onto_plane(el,plane_points)
+        #     if pr_dist<=max_distance:
+        #         pr_neg_list.append(pr_el)
+        #
+        # pr_elec_neg_obj = Electrodes(shape='sphere')
+        # pr_elec_neg_obj.set_electrodes_locations(loc_array=np.array(pr_neg_list))
+        # pr_elec_neg_obj.set_electrodes_color(c=neg_significant_color)
+        # w.add_display_object('pr_elec_neg_obj', pr_elec_neg_obj)
 
-        pr_elec_ni_obj = Electrodes(shape='sphere')
-        pr_elec_ni_obj.set_electrodes_locations(loc_array=np.array(pr_ni_list))
-        pr_elec_ni_obj.set_electrodes_color(c=non_significant_color)
-        w.add_display_object('pr_elec_ni_obj', pr_elec_ni_obj)
-
-
-        pr_neg_list = []
-        for el in tdf_neg.values:
-            pr_el,pr_dist = project_electrode_onto_plane(el,plane_points)
-            if pr_dist<=max_distance:
-                pr_neg_list.append(pr_el)
-
-        pr_elec_neg_obj = Electrodes(shape='sphere')
-        pr_elec_neg_obj.set_electrodes_locations(loc_array=np.array(pr_neg_list))
-        pr_elec_neg_obj.set_electrodes_color(c=neg_significant_color)
-        w.add_display_object('pr_elec_neg_obj', pr_elec_neg_obj)
-
-
+        # print interesting_coords_tdf
 
         pr_pos_list = []
+
         for el in tdf_pos.values:
             pr_el,pr_dist = project_electrode_onto_plane(el,plane_points)
             if pr_dist<=max_distance:
                 pr_pos_list.append(pr_el)
 
+
+        print 'pr_pos_list=',np.array(pr_pos_list)
         pr_elec_pos_obj = Electrodes(shape='sphere')
         pr_elec_pos_obj .set_electrodes_locations(loc_array=np.array(pr_pos_list))
         pr_elec_pos_obj .set_electrodes_color(c=pos_significant_color)

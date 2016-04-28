@@ -245,10 +245,14 @@ def extend_elec_dataframe(df):
 
 
 
+
+
 ttest_table_df_filename = 'ps_aggregator_significance_table'
 
 tdf = pd.read_excel(ttest_table_df_filename+'.xlsx')
-print tdf
+
+# tdf.to_csv(ttest_table_df_filename+'.csv')
+
 
 elec_coord_tdf = construct_elec_dataframe(tdf)
 
