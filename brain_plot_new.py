@@ -128,10 +128,10 @@ if __name__=='__main__':
 
 
 
-    pr_elec_neg_obj = Electrodes(shape='sphere')
-    pr_elec_neg_obj.set_electrodes_locations(loc_array=neg_elecs)
-    pr_elec_neg_obj.set_electrodes_color(c=neg_significant_color)
-    w.add_display_object('pr_elec_neg_obj', pr_elec_neg_obj)
+    # pr_elec_neg_obj = Electrodes(shape='sphere')
+    # pr_elec_neg_obj.set_electrodes_locations(loc_array=neg_elecs)
+    # pr_elec_neg_obj.set_electrodes_color(c=neg_significant_color)
+    # w.add_display_object('pr_elec_neg_obj', pr_elec_neg_obj)
 
 
 
@@ -145,10 +145,10 @@ if __name__=='__main__':
 
 
 
-    pr_elec_flip_obj = Electrodes(shape='sphere')
-    pr_elec_flip_obj .set_electrodes_locations(loc_array=flip_elecs)
-    pr_elec_flip_obj .set_electrodes_color(c=flipping_color)
-    w.add_display_object('pr_elec_flip_obj', pr_elec_flip_obj )
+    # pr_elec_flip_obj = Electrodes(shape='sphere')
+    # pr_elec_flip_obj .set_electrodes_locations(loc_array=flip_elecs)
+    # pr_elec_flip_obj .set_electrodes_color(c=flipping_color)
+    # w.add_display_object('pr_elec_flip_obj', pr_elec_flip_obj )
 
 
 
