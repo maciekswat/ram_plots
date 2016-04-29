@@ -40,17 +40,20 @@ if __name__=='__main__':
     non_significant_color = [128, 128, 128]
     flipping_color = [0,255,0]
 
+    pval_thresh=0.01
+    N_min=5
+
     # ttest_table_df_filename = 'ttest_table_params.csv'
 
-    ttest_table_df_filename = 'ps_aggregator_significance_table_04_28.csv'
+    ttest_table_df_filename = 'ps_aggregator_significance_table.csv'
 
-
+    # tdf = pd.read_excel(ttest_table_df_filename)
     tdf = pd.DataFrame.from_csv(ttest_table_df_filename)
-    coords_tdf = pd.DataFrame.from_csv('coords_'+ttest_table_df_filename)
+    # coords_tdf = pd.DataFrame.from_csv('coords_'+ttest_table_df_filename)
 
 
     # significant POS
-    pos_tdf = tdf[(tdf.p<=0.01) & (tdf.t>0) & (tdf.N>5)
+    pos_tdf = tdf[(tdf.p<=pval_thresh) & (tdf.t>0) & (tdf.N>N_min)
                   & (tdf.eType == 'D')
     ]
 
@@ -58,14 +61,14 @@ if __name__=='__main__':
     
 
     # significant NEG
-    neg_tdf = tdf[(tdf.p<=0.01) & (tdf.t<0) & (tdf.N>5)
+    neg_tdf = tdf[(tdf.p<=pval_thresh) & (tdf.t<0) & (tdf.N>N_min)
                   & (tdf.eType == 'D')
     ]
 
     neg_elecs = get_electrode_positions(neg_tdf)
 
     # non-significant
-    ns_tdf = tdf[(tdf.p>0.01) &  (tdf.N>5)
+    ns_tdf = tdf[(tdf.p>pval_thresh) &  (tdf.N>N_min)
                   & (tdf.eType == 'D')
     ]
 
@@ -73,10 +76,21 @@ if __name__=='__main__':
 
 
     # # non flipping
-    # neg_tdf_filt = neg_tdf[~neg_tdf.index.isin(pos_tdf.index)]
-    # pos_tdf_filt = pos_tdf[~pos_tdf.index.isin(neg_tdf.index)]
-    #
-    # flip_tdf = tdf_neg[tdf_neg.index.isin(tdf_pos.index)]
+    neg_in_pos_sel = neg_tdf['stimAnodeTag'].isin(pos_tdf['stimAnodeTag']) \
+                     & neg_tdf['stimCathodeTag'].isin(pos_tdf['stimCathodeTag']) \
+                     & neg_tdf['Subject'].isin(pos_tdf['Subject'])
+
+
+    pos_in_neg_sel = pos_tdf['stimAnodeTag'].isin(neg_tdf['stimAnodeTag']) \
+                     & pos_tdf['stimCathodeTag'].isin(neg_tdf['stimCathodeTag']) \
+                     & pos_tdf['Subject'].isin(neg_tdf['Subject'])
+
+
+    neg_tdf_filt = neg_tdf[~neg_in_pos_sel]
+    pos_tdf_filt = pos_tdf[~pos_in_neg_sel]
+
+    flip_tdf = neg_tdf[neg_in_pos_sel]
+    flip_tdf = flip_tdf.append(pos_tdf[pos_in_neg_sel])
 
 
 
@@ -87,28 +101,28 @@ if __name__=='__main__':
     plane_points = axial_slice.get_plane_points()
     max_distance = 15.0
 
-    # pr_ni_list = []
-    # for el in ns_elecs:
-    #     pr_el,pr_dist = project_electrode_onto_plane(el,plane_points)
-    #     if pr_dist<=max_distance:
-    #         pr_ni_list.append(pr_el)
-    #
-    # pr_elec_ni_obj = Electrodes(shape='sphere')
-    # pr_elec_ni_obj.set_electrodes_locations(loc_array=np.array(pr_ni_list))
-    # pr_elec_ni_obj.set_electrodes_color(c=non_significant_color)
-    # w.add_display_object('pr_elec_ni_obj', pr_elec_ni_obj)
-    #
-    #
-    # pr_neg_list = []
-    # for el in neg_elecs:
-    #     pr_el,pr_dist = project_electrode_onto_plane(el,plane_points)
-    #     if pr_dist<=max_distance:
-    #         pr_neg_list.append(pr_el)
-    #
-    # pr_elec_neg_obj = Electrodes(shape='sphere')
-    # pr_elec_neg_obj.set_electrodes_locations(loc_array=np.array(pr_neg_list))
-    # pr_elec_neg_obj.set_electrodes_color(c=neg_significant_color)
-    # w.add_display_object('pr_elec_neg_obj', pr_elec_neg_obj)
+    pr_ni_list = []
+    for el in ns_elecs:
+        pr_el,pr_dist = project_electrode_onto_plane(el,plane_points)
+        if pr_dist<=max_distance:
+            pr_ni_list.append(pr_el)
+
+    pr_elec_ni_obj = Electrodes(shape='sphere')
+    pr_elec_ni_obj.set_electrodes_locations(loc_array=np.array(pr_ni_list))
+    pr_elec_ni_obj.set_electrodes_color(c=non_significant_color)
+    w.add_display_object('pr_elec_ni_obj', pr_elec_ni_obj)
+
+
+    pr_neg_list = []
+    for el in neg_elecs:
+        pr_el,pr_dist = project_electrode_onto_plane(el,plane_points)
+        if pr_dist<=max_distance:
+            pr_neg_list.append(pr_el)
+
+    pr_elec_neg_obj = Electrodes(shape='sphere')
+    pr_elec_neg_obj.set_electrodes_locations(loc_array=np.array(pr_neg_list))
+    pr_elec_neg_obj.set_electrodes_color(c=neg_significant_color)
+    w.add_display_object('pr_elec_neg_obj', pr_elec_neg_obj)
 
     print pos_elecs
     pr_pos_list = []
