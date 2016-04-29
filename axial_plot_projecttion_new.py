@@ -92,6 +92,7 @@ if __name__=='__main__':
     flip_tdf = neg_tdf[neg_in_pos_sel]
     flip_tdf = flip_tdf.append(pos_tdf[pos_in_neg_sel])
 
+    flip_elecs = get_electrode_positions(flip_tdf)
 
 
     # axial_slice = AxialSlice(fname='/Users/m/RAM_PLOTS_GIT/datasets/axial-mni-7.0.vtk')
@@ -124,7 +125,7 @@ if __name__=='__main__':
     pr_elec_neg_obj.set_electrodes_color(c=neg_significant_color)
     w.add_display_object('pr_elec_neg_obj', pr_elec_neg_obj)
 
-    print pos_elecs
+
     pr_pos_list = []
     for el in pos_elecs:
         pr_el,pr_dist = project_electrode_onto_plane(el,plane_points)
@@ -138,6 +139,18 @@ if __name__=='__main__':
     w.add_display_object('pr_elec_pos_obj', pr_elec_pos_obj )
 
 
+
+    pr_flip_list = []
+    for el in flip_elecs:
+        pr_el,pr_dist = project_electrode_onto_plane(el,plane_points)
+        if pr_dist<=max_distance:
+            pr_pos_list.append(pr_el)
+
+    print 'pr_flip_list=',np.array(pr_flip_list)
+    pr_elec_flip_obj = Electrodes(shape='sphere')
+    pr_elec_flip_obj .set_electrodes_locations(loc_array=np.array(pr_flip_list))
+    pr_elec_flip_obj .set_electrodes_color(c=flipping_color)
+    w.add_display_object('pr_elec_flip_obj', pr_elec_flip_obj )
 
 
 
