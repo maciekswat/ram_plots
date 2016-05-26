@@ -247,16 +247,16 @@ def extend_elec_dataframe(df):
 
 
 
-ttest_table_df_filename = 'ps_aggregator_significance_table'
+ttest_table_df_filename = 'ps_aggregator_significance_table_05_26'
 
 tdf = pd.read_excel(ttest_table_df_filename+'.xlsx')
 
-# tdf.to_csv(ttest_table_df_filename+'.csv')
+tdf.to_csv(ttest_table_df_filename+'.csv')
 
 
-elec_coord_tdf = construct_elec_dataframe(tdf)
-
-elec_coord_tdf.to_csv('coords_'+ttest_table_df_filename+'.csv')
+# elec_coord_tdf = construct_elec_dataframe(tdf)
+#
+# elec_coord_tdf.to_csv('coords_'+ttest_table_df_filename+'.csv')
 
 
 # print new_tdf

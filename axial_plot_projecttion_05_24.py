@@ -49,7 +49,7 @@ if __name__=='__main__':
     # ttest_table_df_filename = 'ttest_table_params.csv'
 
     # ttest_table_df_filename = 'ps_aggregator_significance_table.csv'
-    ttest_table_df_filename = 'ps_aggregator_significance_table_05_24.csv'
+    ttest_table_df_filename = 'ps_aggregator_significance_table_05_26.csv'
 
     # tdf = pd.read_excel(ttest_table_df_filename)
     tdf = pd.DataFrame.from_csv(ttest_table_df_filename)
@@ -90,6 +90,11 @@ if __name__=='__main__':
                      & pos_tdf['Subject'].isin(neg_tdf['Subject'])
 
     flip_tdf = pd.merge(pos_tdf, neg_tdf, how='inner') #, on=['stimAnodeTag', 'stimCathodeTag','Subject'])
+
+
+    subject_set = set(list(neg_tdf.Subject.unique()) + list(pos_tdf.Subject.unique()) + list(ns_tdf.Subject.unique()) + list(flip_tdf.Subject.unique()))
+    print subject_set
+    print 'Total '+str(len(subject_set))+' subjects'
 
 
 

@@ -3,6 +3,9 @@ from BrainGraphicsFrameWidget import BrainGraphicsFrameWidget
 import pandas as pd
 from brain_plot_utils import *
 
+
+# to preprocess ps data use dataframe_constructor_monopolar.py
+
 if __name__=='__main__':
         sys.path.append('/Users/m/PTSA_NEW_GIT')
 
@@ -18,10 +21,10 @@ if __name__=='__main__':
         non_significant_color = [128, 128, 128]
         flipping_color = [0,255,0]
 
-        ttest_table_df_filename = 'ttest_table_params.csv'
+        # ttest_table_df_filename = 'ttest_table_params.csv'
 
         # ttest_table_df_filename = 'ps_aggregator_significance_table_04_28.csv'
-
+        ttest_table_df_filename = 'ps_aggregator_significance_table_05_24.csv'
 
         tdf = pd.DataFrame.from_csv(ttest_table_df_filename)
         coords_tdf = pd.DataFrame.from_csv('coords_'+ttest_table_df_filename)
