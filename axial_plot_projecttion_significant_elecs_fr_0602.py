@@ -41,6 +41,14 @@ if __name__=='__main__':
 
     # sig_elecs_df = df[np.abs(df['t'])>3.5]
     df = df [ (df.eType=='D') ]
+
+    n_elecs_tot_left = len(df[df.apply(lambda x: x['x']<0.0, axis=1)])
+    n_elecs_tot_right = len(df[df.apply(lambda x: x['x']>0.0, axis=1)])
+
+    print 'Number of surf and grid elecs in LH: ', n_elecs_tot_left
+    print 'Number of surf and grid elecs in RH: ', n_elecs_tot_right
+
+
     
     mask = df['t']>3.0
     
@@ -49,6 +57,17 @@ if __name__=='__main__':
 
     sig_elecs = get_electrode_positions(sig_elecs_df)
     non_sig_elecs = get_electrode_positions(non_sig_elecs_df)
+
+
+    n_sig_elecs_left = len(sig_elecs_df[sig_elecs_df.apply(lambda x: x['x']<0.0, axis=1)])
+    n_sig_elecs_right = len(sig_elecs_df[sig_elecs_df.apply(lambda x: x['x']>0.0, axis=1)])
+
+    print 'LH SIG PERCENTAGE=', n_sig_elecs_left/float(n_elecs_tot_left) *100,'%'
+    print 'RH SIG PERCENTAGE=', n_sig_elecs_right/float(n_elecs_tot_right) *100,'%'
+
+
+    print 'Number of SIGNIFICANT surf and grid elecs in LH: ', n_sig_elecs_left
+    print 'Number of SIGNIFICANT surf and grid elecs in RH: ', n_sig_elecs_right
 
 
 
