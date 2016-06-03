@@ -96,6 +96,11 @@ if __name__=='__main__':
     print subject_set
     print 'Total '+str(len(subject_set))+' subjects'
 
+    # # single subject
+    # single_subj_elec = tdf[(tdf.Subject == 'R1105E') & (tdf.stimAnodeTag=='RAHd2') & (tdf.stimCathodeTag == 'RAHd3')][['Subject','stimAnodeTag','stimCathodeTag','xAvgSurf_anode', 'yAvgSurf_anode', 'zAvgSurf_anode','xAvgSurf_cathode', 'yAvgSurf_cathode', 'zAvgSurf_cathode']].drop_duplicates()
+    # pos_elecs = get_electrode_positions(single_subj_elec)
+
+
 
 
     neg_tdf_filt = neg_tdf[~neg_in_pos_sel]

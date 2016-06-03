@@ -54,8 +54,13 @@ if __name__=='__main__':
 
     # tdf = pd.read_excel(ttest_table_df_filename)
     tdf = pd.DataFrame.from_csv(ttest_table_df_filename)
+
+    print 'TOTAL SUBJECT=', len(tdf.Subject.unique())
     # coords_tdf = pd.DataFrame.from_csv('coords_'+ttest_table_df_filename)
 
+    subj_anode_cathode = tdf[['Subject', 'stimAnodeTag', 'stimCathodeTag']].drop_duplicates()
+    print 'TOTAL EXPERIMENTS=', len(subj_anode_cathode)
+    # sys.exit()
 
     # significant POS
     pos_tdf = tdf[(tdf.p<=pval_thresh) & (tdf.t>0) & (tdf.N>N_min)
